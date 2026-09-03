@@ -1,0 +1,2669 @@
+{
+  "kind": "sable.sdk_catalog",
+  "schemaVersion": 1,
+  "manifest": {
+    "kind": "sable.catalog.manifest",
+    "schemaVersion": 1,
+    "protocolVersion": 1,
+    "catalogId": "niroggyan-brochure-product",
+    "catalogVersionId": "niroggyan-brochure-v1",
+    "version": 1,
+    "organizationId": "niroggyan-tenant",
+    "productId": "niroggyan-brochure-product",
+    "environmentId": "client-poc",
+    "roleProfileId": "public",
+    "channel": "production",
+    "issuedAt": "2026-08-20T00:00:00.000Z",
+    "supportedSdk": {
+      "minimum": "0.1.0",
+      "maximum": "1.0.0"
+    },
+    "applicationBuildHints": [
+      "brochure-main-847efae8"
+    ],
+    "publishedBy": "second analyst — live verification and deployed-source inspection"
+  },
+  "screens": [
+    {
+      "kind": "sable.catalog.screen",
+      "id": "home",
+      "name": "Brochure introduction",
+      "roles": [
+        "public"
+      ],
+      "variants": [
+        {
+          "id": "home-desktop",
+          "viewport": {
+            "minimumWidth": 900
+          },
+          "minimumConfidence": 0.55,
+          "anchors": [
+            {
+              "kind": "route",
+              "pattern": "regex:^/$",
+              "weight": 4
+            },
+            {
+              "kind": "text",
+              "text": "Transform Lab Reports into Insights & Business",
+              "weight": 2
+            },
+            {
+              "kind": "text",
+              "text": "Why Leading Labs & Hospitals Choose Us",
+              "weight": 2
+            }
+          ]
+        },
+        {
+          "id": "home-mobile",
+          "viewport": {
+            "maximumWidth": 899
+          },
+          "minimumConfidence": 0.55,
+          "anchors": [
+            {
+              "kind": "route",
+              "pattern": "regex:^/$",
+              "weight": 4
+            },
+            {
+              "kind": "text",
+              "text": "Transform Lab Reports into Insights & Business",
+              "weight": 2
+            },
+            {
+              "kind": "text",
+              "text": "Why Leading Labs & Hospitals Choose Us",
+              "weight": 2
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "kind": "sable.catalog.screen",
+      "id": "user-journey",
+      "name": "Smart Health Journey",
+      "roles": [
+        "public"
+      ],
+      "variants": [
+        {
+          "id": "user-journey-desktop",
+          "viewport": {
+            "minimumWidth": 900
+          },
+          "minimumConfidence": 0.55,
+          "anchors": [
+            {
+              "kind": "route",
+              "pattern": "regex:^/user-journey/?$",
+              "weight": 4
+            },
+            {
+              "kind": "text",
+              "text": "Smart Health Journey",
+              "weight": 2
+            },
+            {
+              "kind": "text",
+              "text": "The NirogGyan Advantage",
+              "weight": 2
+            }
+          ]
+        },
+        {
+          "id": "user-journey-mobile",
+          "viewport": {
+            "maximumWidth": 899
+          },
+          "minimumConfidence": 0.55,
+          "anchors": [
+            {
+              "kind": "route",
+              "pattern": "regex:^/user-journey/?$",
+              "weight": 4
+            },
+            {
+              "kind": "text",
+              "text": "Smart Health Journey",
+              "weight": 2
+            },
+            {
+              "kind": "text",
+              "text": "The NirogGyan Advantage",
+              "weight": 2
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "kind": "sable.catalog.screen",
+      "id": "smart-reporting",
+      "name": "Smart Reporting overview",
+      "roles": [
+        "public"
+      ],
+      "variants": [
+        {
+          "id": "smart-reporting-desktop",
+          "viewport": {
+            "minimumWidth": 900
+          },
+          "minimumConfidence": 0.55,
+          "anchors": [
+            {
+              "kind": "route",
+              "pattern": "regex:^/smartReporting/?$",
+              "weight": 4
+            },
+            {
+              "kind": "text",
+              "text": "Transform Complex Reports into Clear, Actionable Health Insights",
+              "weight": 2
+            },
+            {
+              "kind": "text",
+              "text": "Next-Generation Smart Reporting",
+              "weight": 2
+            }
+          ]
+        },
+        {
+          "id": "smart-reporting-mobile",
+          "viewport": {
+            "maximumWidth": 899
+          },
+          "minimumConfidence": 0.55,
+          "anchors": [
+            {
+              "kind": "route",
+              "pattern": "regex:^/smartReporting/?$",
+              "weight": 4
+            },
+            {
+              "kind": "text",
+              "text": "Transform Complex Reports into Clear, Actionable Health Insights",
+              "weight": 2
+            },
+            {
+              "kind": "text",
+              "text": "Next-Generation Smart Reporting",
+              "weight": 2
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "kind": "sable.catalog.screen",
+      "id": "smart-report",
+      "name": "Smart Health Report",
+      "roles": [
+        "public"
+      ],
+      "variants": [
+        {
+          "id": "smart-report-desktop",
+          "viewport": {
+            "minimumWidth": 900
+          },
+          "minimumConfidence": 0.55,
+          "anchors": [
+            {
+              "kind": "route",
+              "pattern": "regex:^/smartReport/?$",
+              "weight": 4
+            },
+            {
+              "kind": "text",
+              "text": "Smart Health Report",
+              "weight": 2
+            },
+            {
+              "kind": "text",
+              "text": "What Makes Our Reports Different",
+              "weight": 2
+            }
+          ]
+        },
+        {
+          "id": "smart-report-mobile",
+          "viewport": {
+            "maximumWidth": 899
+          },
+          "minimumConfidence": 0.55,
+          "anchors": [
+            {
+              "kind": "route",
+              "pattern": "regex:^/smartReport/?$",
+              "weight": 4
+            },
+            {
+              "kind": "text",
+              "text": "Smart Health Report",
+              "weight": 2
+            },
+            {
+              "kind": "text",
+              "text": "What Makes Our Reports Different",
+              "weight": 2
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "kind": "sable.catalog.screen",
+      "id": "viz-app",
+      "name": "Viz App",
+      "roles": [
+        "public"
+      ],
+      "variants": [
+        {
+          "id": "viz-app-desktop",
+          "viewport": {
+            "minimumWidth": 900
+          },
+          "minimumConfidence": 0.55,
+          "anchors": [
+            {
+              "kind": "route",
+              "pattern": "regex:^/(?:vizApp|vizapp)/?$",
+              "weight": 4
+            },
+            {
+              "kind": "text",
+              "text": "Viz App",
+              "weight": 2
+            },
+            {
+              "kind": "text",
+              "text": "Our Smart Health Services",
+              "weight": 2
+            }
+          ]
+        },
+        {
+          "id": "viz-app-mobile",
+          "viewport": {
+            "maximumWidth": 899
+          },
+          "minimumConfidence": 0.55,
+          "anchors": [
+            {
+              "kind": "route",
+              "pattern": "regex:^/(?:vizApp|vizapp)/?$",
+              "weight": 4
+            },
+            {
+              "kind": "text",
+              "text": "Viz App",
+              "weight": 2
+            },
+            {
+              "kind": "text",
+              "text": "Our Smart Health Services",
+              "weight": 2
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "kind": "sable.catalog.screen",
+      "id": "legacy-smart-reports",
+      "name": "Legacy Smart Reports page",
+      "roles": [
+        "public"
+      ],
+      "variants": [
+        {
+          "id": "legacy-smart-reports-desktop",
+          "viewport": {
+            "minimumWidth": 900
+          },
+          "minimumConfidence": 0.55,
+          "anchors": [
+            {
+              "kind": "route",
+              "pattern": "regex:^/smartReports/?$",
+              "weight": 4
+            },
+            {
+              "kind": "text",
+              "text": "Smart Report Editions",
+              "weight": 2
+            },
+            {
+              "kind": "text",
+              "text": "View Demo Report",
+              "weight": 2
+            }
+          ]
+        },
+        {
+          "id": "legacy-smart-reports-mobile",
+          "viewport": {
+            "maximumWidth": 899
+          },
+          "minimumConfidence": 0.55,
+          "anchors": [
+            {
+              "kind": "route",
+              "pattern": "regex:^/smartReports/?$",
+              "weight": 4
+            },
+            {
+              "kind": "text",
+              "text": "Smart Report Editions",
+              "weight": 2
+            },
+            {
+              "kind": "text",
+              "text": "View Demo Report",
+              "weight": 2
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "kind": "sable.catalog.screen",
+      "id": "legacy-vizapp-page",
+      "name": "Legacy Viz App page",
+      "roles": [
+        "public"
+      ],
+      "variants": [
+        {
+          "id": "legacy-vizapp-page-desktop",
+          "viewport": {
+            "minimumWidth": 900
+          },
+          "minimumConfidence": 0.55,
+          "anchors": [
+            {
+              "kind": "route",
+              "pattern": "regex:^/vizappPage/?$",
+              "weight": 4
+            },
+            {
+              "kind": "text",
+              "text": "Viz App Features",
+              "weight": 2
+            },
+            {
+              "kind": "text",
+              "text": "Complete Report",
+              "weight": 2
+            }
+          ]
+        },
+        {
+          "id": "legacy-vizapp-page-mobile",
+          "viewport": {
+            "maximumWidth": 899
+          },
+          "minimumConfidence": 0.55,
+          "anchors": [
+            {
+              "kind": "route",
+              "pattern": "regex:^/vizappPage/?$",
+              "weight": 4
+            },
+            {
+              "kind": "text",
+              "text": "Viz App Features",
+              "weight": 2
+            },
+            {
+              "kind": "text",
+              "text": "Complete Report",
+              "weight": 2
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "kind": "sable.catalog.screen",
+      "id": "legacy-analytics",
+      "name": "Legacy Analytics page",
+      "roles": [
+        "public"
+      ],
+      "variants": [
+        {
+          "id": "legacy-analytics-desktop",
+          "viewport": {
+            "minimumWidth": 900
+          },
+          "minimumConfidence": 0.55,
+          "anchors": [
+            {
+              "kind": "route",
+              "pattern": "regex:^/analytics/?$",
+              "weight": 4
+            },
+            {
+              "kind": "text",
+              "text": "Smart Reports",
+              "weight": 2
+            },
+            {
+              "kind": "text",
+              "text": "Personal Report",
+              "weight": 2
+            }
+          ]
+        },
+        {
+          "id": "legacy-analytics-mobile",
+          "viewport": {
+            "maximumWidth": 899
+          },
+          "minimumConfidence": 0.55,
+          "anchors": [
+            {
+              "kind": "route",
+              "pattern": "regex:^/analytics/?$",
+              "weight": 4
+            },
+            {
+              "kind": "text",
+              "text": "Smart Reports",
+              "weight": 2
+            },
+            {
+              "kind": "text",
+              "text": "Personal Report",
+              "weight": 2
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "kind": "sable.catalog.screen",
+      "id": "legacy-health-tools",
+      "name": "Legacy Health Tools page",
+      "roles": [
+        "public"
+      ],
+      "variants": [
+        {
+          "id": "legacy-health-tools-desktop",
+          "viewport": {
+            "minimumWidth": 900
+          },
+          "minimumConfidence": 0.55,
+          "anchors": [
+            {
+              "kind": "route",
+              "pattern": "regex:^/healthTools/?$",
+              "weight": 4
+            },
+            {
+              "kind": "text",
+              "text": "Health Tools Features",
+              "weight": 2
+            },
+            {
+              "kind": "text",
+              "text": "Corporate Dashboard",
+              "weight": 2
+            }
+          ]
+        },
+        {
+          "id": "legacy-health-tools-mobile",
+          "viewport": {
+            "maximumWidth": 899
+          },
+          "minimumConfidence": 0.55,
+          "anchors": [
+            {
+              "kind": "route",
+              "pattern": "regex:^/healthTools/?$",
+              "weight": 4
+            },
+            {
+              "kind": "text",
+              "text": "Health Tools Features",
+              "weight": 2
+            },
+            {
+              "kind": "text",
+              "text": "Corporate Dashboard",
+              "weight": 2
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "kind": "sable.catalog.screen",
+      "id": "engagement",
+      "name": "Patient engagement",
+      "roles": [
+        "public"
+      ],
+      "variants": [
+        {
+          "id": "engagement-desktop",
+          "viewport": {
+            "minimumWidth": 900
+          },
+          "minimumConfidence": 0.55,
+          "anchors": [
+            {
+              "kind": "route",
+              "pattern": "regex:^/engagement/?$",
+              "weight": 4
+            },
+            {
+              "kind": "text",
+              "text": "AI-Powered Engagement Tools That Patients Actually Use",
+              "weight": 2
+            },
+            {
+              "kind": "text",
+              "text": "The Pillars of Modern Patient Engagement",
+              "weight": 2
+            }
+          ]
+        },
+        {
+          "id": "engagement-mobile",
+          "viewport": {
+            "maximumWidth": 899
+          },
+          "minimumConfidence": 0.55,
+          "anchors": [
+            {
+              "kind": "route",
+              "pattern": "regex:^/engagement/?$",
+              "weight": 4
+            },
+            {
+              "kind": "text",
+              "text": "AI-Powered Engagement Tools That Patients Actually Use",
+              "weight": 2
+            },
+            {
+              "kind": "text",
+              "text": "The Pillars of Modern Patient Engagement",
+              "weight": 2
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "kind": "sable.catalog.screen",
+      "id": "testimonials",
+      "name": "Customer evidence",
+      "roles": [
+        "public"
+      ],
+      "variants": [
+        {
+          "id": "testimonials-desktop",
+          "viewport": {
+            "minimumWidth": 900
+          },
+          "minimumConfidence": 0.55,
+          "anchors": [
+            {
+              "kind": "route",
+              "pattern": "regex:^/testimonials/?$",
+              "weight": 4
+            },
+            {
+              "kind": "text",
+              "text": "Real Stories, Real Impact",
+              "weight": 2
+            },
+            {
+              "kind": "text",
+              "text": "We believe in numbers",
+              "weight": 2
+            }
+          ]
+        },
+        {
+          "id": "testimonials-mobile",
+          "viewport": {
+            "maximumWidth": 899
+          },
+          "minimumConfidence": 0.55,
+          "anchors": [
+            {
+              "kind": "route",
+              "pattern": "regex:^/testimonials/?$",
+              "weight": 4
+            },
+            {
+              "kind": "text",
+              "text": "Real Stories, Real Impact",
+              "weight": 2
+            },
+            {
+              "kind": "text",
+              "text": "We believe in numbers",
+              "weight": 2
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "kind": "sable.catalog.screen",
+      "id": "roi-calculator",
+      "name": "Patient retention ROI calculator",
+      "roles": [
+        "public"
+      ],
+      "variants": [
+        {
+          "id": "roi-calculator-desktop",
+          "viewport": {
+            "minimumWidth": 900
+          },
+          "minimumConfidence": 0.55,
+          "anchors": [
+            {
+              "kind": "route",
+              "pattern": "regex:^/roi-calculator/?$",
+              "weight": 4
+            },
+            {
+              "kind": "text",
+              "text": "Calculate Your True Patient Retention ROI",
+              "weight": 2
+            },
+            {
+              "kind": "text",
+              "text": "Your Growth With Smart Reports",
+              "weight": 2
+            }
+          ]
+        },
+        {
+          "id": "roi-calculator-mobile",
+          "viewport": {
+            "maximumWidth": 899
+          },
+          "minimumConfidence": 0.55,
+          "anchors": [
+            {
+              "kind": "route",
+              "pattern": "regex:^/roi-calculator/?$",
+              "weight": 4
+            },
+            {
+              "kind": "text",
+              "text": "Calculate Your True Patient Retention ROI",
+              "weight": 2
+            },
+            {
+              "kind": "text",
+              "text": "Your Growth With Smart Reports",
+              "weight": 2
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "controls": [
+    {
+      "kind": "sable.catalog.control",
+      "id": "home-talk-to-shweta",
+      "screenId": "home",
+      "name": "Open the demo scheduling dialog",
+      "risk": "read",
+      "locators": [
+        {
+          "kind": "aria_role_name",
+          "role": "button",
+          "name": "Talk to Shweta",
+          "rank": 1,
+          "exact": true,
+          "confidence": 0.98
+        }
+      ]
+    },
+    {
+      "kind": "sable.catalog.control",
+      "id": "home-booking-close",
+      "screenId": "home",
+      "name": "Close the demo scheduling dialog",
+      "risk": "read",
+      "locators": [
+        {
+          "kind": "aria_role_name",
+          "role": "button",
+          "name": "close",
+          "rank": 1,
+          "exact": true,
+          "confidence": 0.98
+        }
+      ]
+    },
+    {
+      "kind": "sable.catalog.control",
+      "id": "home-nav-smart-reporting",
+      "screenId": "home",
+      "name": "Desktop Smart Reporting navigation item",
+      "risk": "read",
+      "locators": []
+    },
+    {
+      "kind": "sable.catalog.control",
+      "id": "home-panel-smart-reports",
+      "screenId": "home",
+      "name": "Home Smart Reports expanding panel",
+      "risk": "read",
+      "locators": []
+    },
+    {
+      "kind": "sable.catalog.control",
+      "id": "uj-view-smart-report-repeated",
+      "screenId": "user-journey",
+      "name": "Repeated View Smart Report buttons",
+      "risk": "read",
+      "locators": [
+        {
+          "kind": "aria_role_name",
+          "role": "button",
+          "name": "View Smart Report",
+          "rank": 1,
+          "exact": true,
+          "confidence": 0.25
+        }
+      ]
+    },
+    {
+      "kind": "sable.catalog.control",
+      "id": "uj-view-viz-app",
+      "screenId": "user-journey",
+      "name": "View Viz App",
+      "risk": "read",
+      "locators": [
+        {
+          "kind": "aria_role_name",
+          "role": "button",
+          "name": "View Viz App",
+          "rank": 1,
+          "exact": true,
+          "confidence": 0.98
+        }
+      ]
+    },
+    {
+      "kind": "sable.catalog.control",
+      "id": "uj-view-chat-bot",
+      "screenId": "user-journey",
+      "name": "View Chat Bot",
+      "risk": "read",
+      "locators": [
+        {
+          "kind": "aria_role_name",
+          "role": "button",
+          "name": "View Chat Bot",
+          "rank": 1,
+          "exact": true,
+          "confidence": 0.98
+        }
+      ]
+    },
+    {
+      "kind": "sable.catalog.control",
+      "id": "uj-view-analytics",
+      "screenId": "user-journey",
+      "name": "View Analytics",
+      "risk": "read",
+      "locators": [
+        {
+          "kind": "aria_role_name",
+          "role": "button",
+          "name": "View Analytics",
+          "rank": 1,
+          "exact": true,
+          "confidence": 0.98
+        }
+      ]
+    },
+    {
+      "kind": "sable.catalog.control",
+      "id": "uj-contact-now",
+      "screenId": "user-journey",
+      "name": "Open Contact Now booking dialog",
+      "risk": "read",
+      "locators": [
+        {
+          "kind": "aria_role_name",
+          "role": "button",
+          "name": "Contact Now",
+          "rank": 1,
+          "exact": true,
+          "confidence": 0.98
+        }
+      ]
+    },
+    {
+      "kind": "sable.catalog.control",
+      "id": "sr-learn-more",
+      "screenId": "smart-reporting",
+      "name": "Learn More",
+      "risk": "read",
+      "locators": [
+        {
+          "kind": "aria_role_name",
+          "role": "button",
+          "name": "Learn More",
+          "rank": 1,
+          "exact": true,
+          "confidence": 0.98
+        }
+      ]
+    },
+    {
+      "kind": "sable.catalog.control",
+      "id": "sr-preview-repeated",
+      "screenId": "smart-reporting",
+      "name": "Repeated Smart Reporting Preview buttons",
+      "risk": "read",
+      "locators": [
+        {
+          "kind": "aria_role_name",
+          "role": "button",
+          "name": "Preview",
+          "rank": 1,
+          "exact": true,
+          "confidence": 0.25
+        }
+      ]
+    },
+    {
+      "kind": "sable.catalog.control",
+      "id": "smart-report-preview-repeated",
+      "screenId": "smart-report",
+      "name": "Repeated report Preview buttons",
+      "risk": "read",
+      "locators": [
+        {
+          "kind": "aria_role_name",
+          "role": "button",
+          "name": "Preview",
+          "rank": 1,
+          "exact": true,
+          "confidence": 0.2
+        }
+      ]
+    },
+    {
+      "kind": "sable.catalog.control",
+      "id": "viz-try-now",
+      "screenId": "viz-app",
+      "name": "Open the external Viz App demo",
+      "risk": "external_side_effect",
+      "locators": [
+        {
+          "kind": "aria_role_name",
+          "role": "button",
+          "name": "Try Now",
+          "rank": 1,
+          "exact": true,
+          "confidence": 0.98
+        }
+      ]
+    },
+    {
+      "kind": "sable.catalog.control",
+      "id": "eng-discover-ai-tools",
+      "screenId": "engagement",
+      "name": "Open the external consumer analyzer",
+      "risk": "external_side_effect",
+      "locators": [
+        {
+          "kind": "aria_role_name",
+          "role": "button",
+          "name": "Discover AI Tools",
+          "rank": 1,
+          "exact": true,
+          "confidence": 0.98
+        }
+      ]
+    },
+    {
+      "kind": "sable.catalog.control",
+      "id": "eng-preview-whatsapp",
+      "screenId": "engagement",
+      "name": "Open the WhatsApp chatbot preview",
+      "risk": "read",
+      "locators": [
+        {
+          "kind": "aria_role_name",
+          "role": "button",
+          "name": "Preview",
+          "rank": 1,
+          "exact": true,
+          "confidence": 0.98
+        }
+      ]
+    },
+    {
+      "kind": "sable.catalog.control",
+      "id": "eng-preview-close",
+      "screenId": "engagement",
+      "name": "Close the WhatsApp chatbot preview",
+      "risk": "read",
+      "locators": [
+        {
+          "kind": "aria_role_name",
+          "role": "button",
+          "name": "✕",
+          "rank": 1,
+          "exact": true,
+          "confidence": 0.98
+        }
+      ]
+    },
+    {
+      "kind": "sable.catalog.control",
+      "id": "eng-corporate-try-now",
+      "screenId": "engagement",
+      "name": "Open the external corporate dashboard",
+      "risk": "external_side_effect",
+      "locators": [
+        {
+          "kind": "aria_role_name",
+          "role": "button",
+          "name": "Try Now",
+          "rank": 1,
+          "exact": true,
+          "confidence": 0.98
+        }
+      ]
+    },
+    {
+      "kind": "sable.catalog.control",
+      "id": "roi-monthly-volume",
+      "screenId": "roi-calculator",
+      "name": "Monthly Patient Volume",
+      "risk": "reversible_write",
+      "locators": [
+        {
+          "kind": "aria_role_name",
+          "role": "slider",
+          "name": "Monthly Patient Volume",
+          "rank": 1,
+          "exact": true,
+          "confidence": 0.98
+        }
+      ],
+      "privacyTags": [
+        "business_input"
+      ]
+    },
+    {
+      "kind": "sable.catalog.control",
+      "id": "roi-average-revenue",
+      "screenId": "roi-calculator",
+      "name": "Average Revenue Per Patient",
+      "risk": "reversible_write",
+      "locators": [
+        {
+          "kind": "aria_role_name",
+          "role": "slider",
+          "name": "Average Revenue Per Patient",
+          "rank": 1,
+          "exact": true,
+          "confidence": 0.98
+        }
+      ],
+      "privacyTags": [
+        "business_input"
+      ]
+    },
+    {
+      "kind": "sable.catalog.control",
+      "id": "roi-retention-rate",
+      "screenId": "roi-calculator",
+      "name": "Current Patient Retention Rate",
+      "risk": "reversible_write",
+      "locators": [
+        {
+          "kind": "aria_role_name",
+          "role": "slider",
+          "name": "Current Patient Retention Rate",
+          "rank": 1,
+          "exact": true,
+          "confidence": 0.98
+        }
+      ],
+      "privacyTags": [
+        "business_input"
+      ]
+    },
+    {
+      "kind": "sable.catalog.control",
+      "id": "roi-book-demo",
+      "screenId": "roi-calculator",
+      "name": "Book a Demo",
+      "risk": "read",
+      "locators": [
+        {
+          "kind": "aria_role_name",
+          "role": "button",
+          "name": "Book a Demo",
+          "rank": 1,
+          "exact": true,
+          "confidence": 0.98
+        }
+      ]
+    },
+    {
+      "kind": "sable.catalog.control",
+      "id": "roi-booking-close",
+      "screenId": "roi-calculator",
+      "name": "Close ROI booking dialog",
+      "risk": "read",
+      "locators": [
+        {
+          "kind": "aria_role_name",
+          "role": "button",
+          "name": "close",
+          "rank": 1,
+          "exact": true,
+          "confidence": 0.98
+        }
+      ]
+    },
+    {
+      "kind": "sable.catalog.control",
+      "id": "hubspot-scheduling-frame",
+      "screenId": "home",
+      "name": "HubSpot scheduling iframe",
+      "risk": "external_side_effect",
+      "locators": [],
+      "frame": {
+        "kind": "bridge_required",
+        "name": "Schedule a meeting"
+      },
+      "privacyTags": [
+        "third_party",
+        "scheduling"
+      ]
+    }
+  ],
+  "journeys": [
+    {
+      "kind": "sable.catalog.journey",
+      "id": "show-brochure-overview",
+      "version": 1,
+      "name": "Explain the brochure overview",
+      "description": "A grounded, read-only introduction to the public brochure.",
+      "intents": [
+        "what is this brochure",
+        "give me an overview",
+        "what does NirogGyan offer",
+        "show me the main value"
+      ],
+      "roles": [
+        "public"
+      ],
+      "risk": "read",
+      "inputSchema": {
+        "kind": "sable.journey_input_schema",
+        "properties": {},
+        "required": [],
+        "additionalProperties": false
+      },
+      "workflow": {
+        "kind": "sable.workflow",
+        "schemaVersion": 1,
+        "id": "show-brochure-overview",
+        "version": 1,
+        "name": "Explain the brochure overview",
+        "startUrl": {
+          "kind": "literal",
+          "value": "https://www.brochure.niroggyan.com/"
+        },
+        "risk": "read",
+        "preconditions": [
+          {
+            "kind": "screen_matches",
+            "screenId": "home",
+            "minimumConfidence": 0.55
+          }
+        ],
+        "steps": [
+          {
+            "id": "overview-headline",
+            "kind": "assert",
+            "assertion": {
+              "kind": "text_visible",
+              "text": "Transform Lab Reports into Insights & Business"
+            },
+            "narration": "This brochure presents NirogGyan's smart reporting, engagement, analytics, and lab-growth proposition.",
+            "compatibility": {
+              "kind": "sable.step_compatibility",
+              "stepId": "overview-headline",
+              "classification": "SDK_DIRECT",
+              "reason": "Live DOM verification confirmed the home headline.",
+              "verifiedAt": "2026-08-20T00:00:00.000Z",
+              "verifiedSdkVersion": "0.1.0",
+              "verifiedApplicationBuild": "brochure-main-847efae8"
+            }
+          },
+          {
+            "id": "overview-benefits",
+            "kind": "assert",
+            "assertion": {
+              "kind": "text_visible",
+              "text": "Why Leading Labs & Hospitals Choose Us"
+            },
+            "narration": "The page attributes retention, follow-up automation, revenue insight, and onboarding benefits to its platform.",
+            "compatibility": {
+              "kind": "sable.step_compatibility",
+              "stepId": "overview-benefits",
+              "classification": "SDK_DIRECT",
+              "reason": "Live DOM verification confirmed the benefits section.",
+              "verifiedAt": "2026-08-20T00:00:00.000Z",
+              "verifiedSdkVersion": "0.1.0",
+              "verifiedApplicationBuild": "brochure-main-847efae8"
+            }
+          }
+        ],
+        "postconditions": [
+          {
+            "kind": "text_visible",
+            "text": "Seamless Onboarding"
+          }
+        ]
+      },
+      "compatibility": [
+        {
+          "kind": "sable.step_compatibility",
+          "stepId": "overview-headline",
+          "classification": "SDK_DIRECT",
+          "reason": "Live DOM verification confirmed the home headline.",
+          "verifiedAt": "2026-08-20T00:00:00.000Z",
+          "verifiedSdkVersion": "0.1.0",
+          "verifiedApplicationBuild": "brochure-main-847efae8"
+        },
+        {
+          "kind": "sable.step_compatibility",
+          "stepId": "overview-benefits",
+          "classification": "SDK_DIRECT",
+          "reason": "Live DOM verification confirmed the benefits section.",
+          "verifiedAt": "2026-08-20T00:00:00.000Z",
+          "verifiedSdkVersion": "0.1.0",
+          "verifiedApplicationBuild": "brochure-main-847efae8"
+        }
+      ],
+      "state": "approved",
+      "reliability": 0.98,
+      "sourceCitations": [
+        {
+          "kind": "exploration",
+          "sourceId": "exploration-2026-08-20-brochure",
+          "title": "NirogGyan brochure live DOM and deployed source build 847efae8"
+        }
+      ]
+    },
+    {
+      "kind": "sable.catalog.journey",
+      "id": "open-demo-scheduling-dialog",
+      "version": 1,
+      "name": "Open the demo scheduling dialog",
+      "description": "Open the in-page HubSpot scheduling dialog without selecting or submitting a time.",
+      "intents": [
+        "open the demo booking",
+        "talk to Shweta",
+        "show me the calendar",
+        "schedule a demo"
+      ],
+      "roles": [
+        "public"
+      ],
+      "risk": "read",
+      "inputSchema": {
+        "kind": "sable.journey_input_schema",
+        "properties": {},
+        "required": [],
+        "additionalProperties": false
+      },
+      "workflow": {
+        "kind": "sable.workflow",
+        "schemaVersion": 1,
+        "id": "open-demo-scheduling-dialog",
+        "version": 1,
+        "name": "Open the demo scheduling dialog",
+        "startUrl": {
+          "kind": "literal",
+          "value": "https://www.brochure.niroggyan.com/"
+        },
+        "risk": "read",
+        "preconditions": [
+          {
+            "kind": "screen_matches",
+            "screenId": "home",
+            "minimumConfidence": 0.55
+          }
+        ],
+        "steps": [
+          {
+            "id": "booking-open",
+            "kind": "action",
+            "action": "click",
+            "target": {
+              "controlId": "home-talk-to-shweta",
+              "screenId": "home"
+            },
+            "narration": "I'll open the scheduling dialog; choosing a time remains with you.",
+            "compatibility": {
+              "kind": "sable.step_compatibility",
+              "stepId": "booking-open",
+              "classification": "SDK_DIRECT",
+              "reason": "The unique Talk to Shweta button was live-tested and opens an in-page dialog without leaving the origin.",
+              "verifiedAt": "2026-08-20T00:00:00.000Z",
+              "verifiedSdkVersion": "0.1.0",
+              "verifiedApplicationBuild": "brochure-main-847efae8"
+            }
+          },
+          {
+            "id": "booking-wait",
+            "kind": "action",
+            "action": "wait",
+            "until": {
+              "kind": "text_visible",
+              "text": "Schedule a Demo"
+            },
+            "timeoutMs": 5000,
+            "compatibility": {
+              "kind": "sable.step_compatibility",
+              "stepId": "booking-wait",
+              "classification": "SDK_DIRECT",
+              "reason": "The dialog title is a stable, observable completion signal.",
+              "verifiedAt": "2026-08-20T00:00:00.000Z",
+              "verifiedSdkVersion": "0.1.0",
+              "verifiedApplicationBuild": "brochure-main-847efae8"
+            }
+          }
+        ],
+        "postconditions": [
+          {
+            "kind": "text_visible",
+            "text": "Book a time that works for you"
+          }
+        ]
+      },
+      "compatibility": [
+        {
+          "kind": "sable.step_compatibility",
+          "stepId": "booking-open",
+          "classification": "SDK_DIRECT",
+          "reason": "The unique Talk to Shweta button was live-tested and opens an in-page dialog without leaving the origin.",
+          "verifiedAt": "2026-08-20T00:00:00.000Z",
+          "verifiedSdkVersion": "0.1.0",
+          "verifiedApplicationBuild": "brochure-main-847efae8"
+        },
+        {
+          "kind": "sable.step_compatibility",
+          "stepId": "booking-wait",
+          "classification": "SDK_DIRECT",
+          "reason": "The dialog title is a stable, observable completion signal.",
+          "verifiedAt": "2026-08-20T00:00:00.000Z",
+          "verifiedSdkVersion": "0.1.0",
+          "verifiedApplicationBuild": "brochure-main-847efae8"
+        }
+      ],
+      "state": "approved",
+      "reliability": 0.98,
+      "sourceCitations": [
+        {
+          "kind": "exploration",
+          "sourceId": "exploration-2026-08-20-brochure",
+          "title": "NirogGyan brochure live DOM and deployed source build 847efae8"
+        }
+      ]
+    },
+    {
+      "kind": "sable.catalog.journey",
+      "id": "close-demo-scheduling-dialog",
+      "version": 1,
+      "name": "Close the demo scheduling dialog",
+      "description": "Close the local scheduling dialog without interacting with the cross-origin calendar.",
+      "intents": [
+        "close the calendar",
+        "close the demo dialog",
+        "dismiss scheduling"
+      ],
+      "roles": [
+        "public"
+      ],
+      "risk": "read",
+      "inputSchema": {
+        "kind": "sable.journey_input_schema",
+        "properties": {},
+        "required": [],
+        "additionalProperties": false
+      },
+      "workflow": {
+        "kind": "sable.workflow",
+        "schemaVersion": 1,
+        "id": "close-demo-scheduling-dialog",
+        "version": 1,
+        "name": "Close the demo scheduling dialog",
+        "risk": "read",
+        "preconditions": [
+          {
+            "kind": "screen_matches",
+            "screenId": "home",
+            "minimumConfidence": 0.55
+          },
+          {
+            "kind": "text_visible",
+            "text": "Schedule a Demo"
+          }
+        ],
+        "steps": [
+          {
+            "id": "booking-close",
+            "kind": "action",
+            "action": "click",
+            "target": {
+              "controlId": "home-booking-close",
+              "screenId": "home"
+            },
+            "compatibility": {
+              "kind": "sable.step_compatibility",
+              "stepId": "booking-close",
+              "classification": "SDK_DIRECT",
+              "reason": "The dialog exposes one enabled button with aria-label close; live verification closed it.",
+              "verifiedAt": "2026-08-20T00:00:00.000Z",
+              "verifiedSdkVersion": "0.1.0",
+              "verifiedApplicationBuild": "brochure-main-847efae8"
+            }
+          },
+          {
+            "id": "booking-close-wait",
+            "kind": "action",
+            "action": "wait",
+            "until": {
+              "kind": "text_absent",
+              "text": "Book a time that works for you"
+            },
+            "timeoutMs": 5000,
+            "compatibility": {
+              "kind": "sable.step_compatibility",
+              "stepId": "booking-close-wait",
+              "classification": "SDK_DIRECT",
+              "reason": "The dialog subtitle disappearing proves the dialog closed.",
+              "verifiedAt": "2026-08-20T00:00:00.000Z",
+              "verifiedSdkVersion": "0.1.0",
+              "verifiedApplicationBuild": "brochure-main-847efae8"
+            }
+          }
+        ],
+        "postconditions": [
+          {
+            "kind": "text_absent",
+            "text": "Schedule a Demo"
+          }
+        ]
+      },
+      "compatibility": [
+        {
+          "kind": "sable.step_compatibility",
+          "stepId": "booking-close",
+          "classification": "SDK_DIRECT",
+          "reason": "The dialog exposes one enabled button with aria-label close; live verification closed it.",
+          "verifiedAt": "2026-08-20T00:00:00.000Z",
+          "verifiedSdkVersion": "0.1.0",
+          "verifiedApplicationBuild": "brochure-main-847efae8"
+        },
+        {
+          "kind": "sable.step_compatibility",
+          "stepId": "booking-close-wait",
+          "classification": "SDK_DIRECT",
+          "reason": "The dialog subtitle disappearing proves the dialog closed.",
+          "verifiedAt": "2026-08-20T00:00:00.000Z",
+          "verifiedSdkVersion": "0.1.0",
+          "verifiedApplicationBuild": "brochure-main-847efae8"
+        }
+      ],
+      "state": "approved",
+      "reliability": 0.98,
+      "sourceCitations": [
+        {
+          "kind": "exploration",
+          "sourceId": "exploration-2026-08-20-brochure",
+          "title": "NirogGyan brochure live DOM and deployed source build 847efae8"
+        }
+      ]
+    },
+    {
+      "kind": "sable.catalog.journey",
+      "id": "open-viz-app-from-user-journey",
+      "version": 1,
+      "name": "Open Viz App from the user journey",
+      "description": "Use the unique SPA button to reach the first-party Viz App brochure page.",
+      "intents": [
+        "show the viz app",
+        "open the digital report",
+        "view viz app"
+      ],
+      "roles": [
+        "public"
+      ],
+      "risk": "read",
+      "inputSchema": {
+        "kind": "sable.journey_input_schema",
+        "properties": {},
+        "required": [],
+        "additionalProperties": false
+      },
+      "workflow": {
+        "kind": "sable.workflow",
+        "schemaVersion": 1,
+        "id": "open-viz-app-from-user-journey",
+        "version": 1,
+        "name": "Open Viz App from the user journey",
+        "startUrl": {
+          "kind": "literal",
+          "value": "https://www.brochure.niroggyan.com/user-journey"
+        },
+        "risk": "read",
+        "preconditions": [
+          {
+            "kind": "screen_matches",
+            "screenId": "user-journey",
+            "minimumConfidence": 0.55
+          }
+        ],
+        "steps": [
+          {
+            "id": "uj-open-viz",
+            "kind": "action",
+            "action": "click",
+            "target": {
+              "controlId": "uj-view-viz-app",
+              "screenId": "user-journey"
+            },
+            "narration": "I'll open the Viz App brochure page.",
+            "compatibility": {
+              "kind": "sable.step_compatibility",
+              "stepId": "uj-open-viz",
+              "classification": "SDK_DIRECT",
+              "reason": "The unique button was live-tested; React pushState reached /vizapp without unloading the document.",
+              "verifiedAt": "2026-08-20T00:00:00.000Z",
+              "verifiedSdkVersion": "0.1.0",
+              "verifiedApplicationBuild": "brochure-main-847efae8"
+            }
+          }
+        ],
+        "postconditions": [
+          {
+            "kind": "url_matches",
+            "pattern": "^https://www\\.brochure\\.niroggyan\\.com/vizapp/?$"
+          }
+        ]
+      },
+      "compatibility": [
+        {
+          "kind": "sable.step_compatibility",
+          "stepId": "uj-open-viz",
+          "classification": "SDK_DIRECT",
+          "reason": "The unique button was live-tested; React pushState reached /vizapp without unloading the document.",
+          "verifiedAt": "2026-08-20T00:00:00.000Z",
+          "verifiedSdkVersion": "0.1.0",
+          "verifiedApplicationBuild": "brochure-main-847efae8"
+        }
+      ],
+      "state": "approved",
+      "reliability": 0.97,
+      "sourceCitations": [
+        {
+          "kind": "exploration",
+          "sourceId": "exploration-2026-08-20-brochure",
+          "title": "NirogGyan brochure live DOM and deployed source build 847efae8"
+        }
+      ]
+    },
+    {
+      "kind": "sable.catalog.journey",
+      "id": "open-engagement-from-user-journey",
+      "version": 1,
+      "name": "Open patient engagement from the user journey",
+      "description": "Use the unique View Chat Bot SPA button to reach engagement tooling.",
+      "intents": [
+        "show the chatbot",
+        "open engagement tools",
+        "view patient engagement"
+      ],
+      "roles": [
+        "public"
+      ],
+      "risk": "read",
+      "inputSchema": {
+        "kind": "sable.journey_input_schema",
+        "properties": {},
+        "required": [],
+        "additionalProperties": false
+      },
+      "workflow": {
+        "kind": "sable.workflow",
+        "schemaVersion": 1,
+        "id": "open-engagement-from-user-journey",
+        "version": 1,
+        "name": "Open patient engagement from the user journey",
+        "startUrl": {
+          "kind": "literal",
+          "value": "https://www.brochure.niroggyan.com/user-journey"
+        },
+        "risk": "read",
+        "preconditions": [
+          {
+            "kind": "screen_matches",
+            "screenId": "user-journey",
+            "minimumConfidence": 0.55
+          }
+        ],
+        "steps": [
+          {
+            "id": "uj-open-engagement",
+            "kind": "action",
+            "action": "click",
+            "target": {
+              "controlId": "uj-view-chat-bot",
+              "screenId": "user-journey"
+            },
+            "narration": "I'll open the patient-engagement page.",
+            "compatibility": {
+              "kind": "sable.step_compatibility",
+              "stepId": "uj-open-engagement",
+              "classification": "SDK_DIRECT",
+              "reason": "The unique button was live-tested; React pushState reached /engagement without a document load.",
+              "verifiedAt": "2026-08-20T00:00:00.000Z",
+              "verifiedSdkVersion": "0.1.0",
+              "verifiedApplicationBuild": "brochure-main-847efae8"
+            }
+          }
+        ],
+        "postconditions": [
+          {
+            "kind": "url_matches",
+            "pattern": "^https://www\\.brochure\\.niroggyan\\.com/engagement/?$"
+          }
+        ]
+      },
+      "compatibility": [
+        {
+          "kind": "sable.step_compatibility",
+          "stepId": "uj-open-engagement",
+          "classification": "SDK_DIRECT",
+          "reason": "The unique button was live-tested; React pushState reached /engagement without a document load.",
+          "verifiedAt": "2026-08-20T00:00:00.000Z",
+          "verifiedSdkVersion": "0.1.0",
+          "verifiedApplicationBuild": "brochure-main-847efae8"
+        }
+      ],
+      "state": "approved",
+      "reliability": 0.97,
+      "sourceCitations": [
+        {
+          "kind": "exploration",
+          "sourceId": "exploration-2026-08-20-brochure",
+          "title": "NirogGyan brochure live DOM and deployed source build 847efae8"
+        }
+      ]
+    },
+    {
+      "kind": "sable.catalog.journey",
+      "id": "open-whatsapp-chatbot-preview",
+      "version": 1,
+      "name": "Open the WhatsApp chatbot preview",
+      "description": "Open the local image preview for the follow-up chatbot.",
+      "intents": [
+        "preview the whatsapp chatbot",
+        "show follow-up engines",
+        "show the chatbot preview"
+      ],
+      "roles": [
+        "public"
+      ],
+      "risk": "read",
+      "inputSchema": {
+        "kind": "sable.journey_input_schema",
+        "properties": {},
+        "required": [],
+        "additionalProperties": false
+      },
+      "workflow": {
+        "kind": "sable.workflow",
+        "schemaVersion": 1,
+        "id": "open-whatsapp-chatbot-preview",
+        "version": 1,
+        "name": "Open the WhatsApp chatbot preview",
+        "startUrl": {
+          "kind": "literal",
+          "value": "https://www.brochure.niroggyan.com/engagement"
+        },
+        "risk": "read",
+        "preconditions": [
+          {
+            "kind": "screen_matches",
+            "screenId": "engagement",
+            "minimumConfidence": 0.55
+          }
+        ],
+        "steps": [
+          {
+            "id": "eng-preview-open",
+            "kind": "action",
+            "action": "click",
+            "target": {
+              "controlId": "eng-preview-whatsapp",
+              "screenId": "engagement"
+            },
+            "narration": "I'll open the WhatsApp chatbot preview.",
+            "compatibility": {
+              "kind": "sable.step_compatibility",
+              "stepId": "eng-preview-open",
+              "classification": "SDK_DIRECT",
+              "reason": "The page has one enabled Preview button; live verification opened the Follow-up Engines Preview overlay.",
+              "verifiedAt": "2026-08-20T00:00:00.000Z",
+              "verifiedSdkVersion": "0.1.0",
+              "verifiedApplicationBuild": "brochure-main-847efae8"
+            }
+          }
+        ],
+        "postconditions": [
+          {
+            "kind": "text_visible",
+            "text": "Follow-up Engines Preview"
+          }
+        ]
+      },
+      "compatibility": [
+        {
+          "kind": "sable.step_compatibility",
+          "stepId": "eng-preview-open",
+          "classification": "SDK_DIRECT",
+          "reason": "The page has one enabled Preview button; live verification opened the Follow-up Engines Preview overlay.",
+          "verifiedAt": "2026-08-20T00:00:00.000Z",
+          "verifiedSdkVersion": "0.1.0",
+          "verifiedApplicationBuild": "brochure-main-847efae8"
+        }
+      ],
+      "state": "approved",
+      "reliability": 0.98,
+      "sourceCitations": [
+        {
+          "kind": "exploration",
+          "sourceId": "exploration-2026-08-20-brochure",
+          "title": "NirogGyan brochure live DOM and deployed source build 847efae8"
+        }
+      ]
+    },
+    {
+      "kind": "sable.catalog.journey",
+      "id": "close-whatsapp-chatbot-preview",
+      "version": 1,
+      "name": "Close the WhatsApp chatbot preview",
+      "description": "Close the local chatbot preview overlay.",
+      "intents": [
+        "close the chatbot preview",
+        "dismiss follow-up preview"
+      ],
+      "roles": [
+        "public"
+      ],
+      "risk": "read",
+      "inputSchema": {
+        "kind": "sable.journey_input_schema",
+        "properties": {},
+        "required": [],
+        "additionalProperties": false
+      },
+      "workflow": {
+        "kind": "sable.workflow",
+        "schemaVersion": 1,
+        "id": "close-whatsapp-chatbot-preview",
+        "version": 1,
+        "name": "Close the WhatsApp chatbot preview",
+        "risk": "read",
+        "preconditions": [
+          {
+            "kind": "screen_matches",
+            "screenId": "engagement",
+            "minimumConfidence": 0.55
+          },
+          {
+            "kind": "text_visible",
+            "text": "Follow-up Engines Preview"
+          }
+        ],
+        "steps": [
+          {
+            "id": "eng-preview-close",
+            "kind": "action",
+            "action": "click",
+            "target": {
+              "controlId": "eng-preview-close",
+              "screenId": "engagement"
+            },
+            "compatibility": {
+              "kind": "sable.step_compatibility",
+              "stepId": "eng-preview-close",
+              "classification": "SDK_DIRECT",
+              "reason": "The open overlay exposes one button named ✕ and source/live verification confirm it closes the overlay.",
+              "verifiedAt": "2026-08-20T00:00:00.000Z",
+              "verifiedSdkVersion": "0.1.0",
+              "verifiedApplicationBuild": "brochure-main-847efae8"
+            }
+          }
+        ],
+        "postconditions": [
+          {
+            "kind": "text_absent",
+            "text": "Follow-up Engines Preview"
+          }
+        ]
+      },
+      "compatibility": [
+        {
+          "kind": "sable.step_compatibility",
+          "stepId": "eng-preview-close",
+          "classification": "SDK_DIRECT",
+          "reason": "The open overlay exposes one button named ✕ and source/live verification confirm it closes the overlay.",
+          "verifiedAt": "2026-08-20T00:00:00.000Z",
+          "verifiedSdkVersion": "0.1.0",
+          "verifiedApplicationBuild": "brochure-main-847efae8"
+        }
+      ],
+      "state": "approved",
+      "reliability": 0.98,
+      "sourceCitations": [
+        {
+          "kind": "exploration",
+          "sourceId": "exploration-2026-08-20-brochure",
+          "title": "NirogGyan brochure live DOM and deployed source build 847efae8"
+        }
+      ]
+    },
+    {
+      "kind": "sable.catalog.journey",
+      "id": "run-sample-roi-calculation",
+      "version": 1,
+      "name": "Run a sample patient-retention ROI calculation",
+      "description": "Set non-personal sample lab metrics and verify the live recomputed range.",
+      "intents": [
+        "demo the roi calculator",
+        "run a sample roi",
+        "show how retention affects revenue",
+        "calculate a sample"
+      ],
+      "roles": [
+        "public"
+      ],
+      "risk": "reversible_write",
+      "inputSchema": {
+        "kind": "sable.journey_input_schema",
+        "properties": {},
+        "required": [],
+        "additionalProperties": false
+      },
+      "workflow": {
+        "kind": "sable.workflow",
+        "schemaVersion": 1,
+        "id": "run-sample-roi-calculation",
+        "version": 1,
+        "name": "Run a sample patient-retention ROI calculation",
+        "startUrl": {
+          "kind": "literal",
+          "value": "https://www.brochure.niroggyan.com/roi-calculator"
+        },
+        "risk": "reversible_write",
+        "preconditions": [
+          {
+            "kind": "screen_matches",
+            "screenId": "roi-calculator",
+            "minimumConfidence": 0.55
+          }
+        ],
+        "steps": [
+          {
+            "id": "roi-volume",
+            "kind": "action",
+            "action": "fill",
+            "target": {
+              "controlId": "roi-monthly-volume",
+              "screenId": "roi-calculator"
+            },
+            "value": {
+              "kind": "literal",
+              "value": "12000"
+            },
+            "narration": "I'll use a sample monthly volume of 12,000.",
+            "compatibility": {
+              "kind": "sable.step_compatibility",
+              "stepId": "roi-volume",
+              "classification": "SDK_DIRECT",
+              "reason": "The range input has the unique aria-label Monthly Patient Volume; the SDK's native input/change path is compatible with the MUI controlled slider.",
+              "verifiedAt": "2026-08-20T00:00:00.000Z",
+              "verifiedSdkVersion": "0.1.0",
+              "verifiedApplicationBuild": "brochure-main-847efae8"
+            }
+          },
+          {
+            "id": "roi-aov",
+            "kind": "action",
+            "action": "fill",
+            "target": {
+              "controlId": "roi-average-revenue",
+              "screenId": "roi-calculator"
+            },
+            "value": {
+              "kind": "literal",
+              "value": "2000"
+            },
+            "narration": "I'll use a sample average revenue of ₹2,000.",
+            "compatibility": {
+              "kind": "sable.step_compatibility",
+              "stepId": "roi-aov",
+              "classification": "SDK_DIRECT",
+              "reason": "The range input has the unique aria-label Average Revenue Per Patient and was verified against the live control.",
+              "verifiedAt": "2026-08-20T00:00:00.000Z",
+              "verifiedSdkVersion": "0.1.0",
+              "verifiedApplicationBuild": "brochure-main-847efae8"
+            }
+          },
+          {
+            "id": "roi-retention",
+            "kind": "action",
+            "action": "fill",
+            "target": {
+              "controlId": "roi-retention-rate",
+              "screenId": "roi-calculator"
+            },
+            "value": {
+              "kind": "literal",
+              "value": "30"
+            },
+            "narration": "I'll use a sample current retention rate of 30%.",
+            "compatibility": {
+              "kind": "sable.step_compatibility",
+              "stepId": "roi-retention",
+              "classification": "SDK_DIRECT",
+              "reason": "The range input has the unique aria-label Current Patient Retention Rate and was verified against the live control.",
+              "verifiedAt": "2026-08-20T00:00:00.000Z",
+              "verifiedSdkVersion": "0.1.0",
+              "verifiedApplicationBuild": "brochure-main-847efae8"
+            }
+          },
+          {
+            "id": "roi-result",
+            "kind": "assert",
+            "assertion": {
+              "kind": "text_visible",
+              "text": "2,160 – 8,640 patients/year"
+            },
+            "narration": "For those sample inputs, the site's calculator estimates 2,160–8,640 extra returning patients per year. This is a marketing scenario, not a guarantee.",
+            "compatibility": {
+              "kind": "sable.step_compatibility",
+              "stepId": "roi-result",
+              "classification": "SDK_DIRECT",
+              "reason": "A native live interaction produced this exact recomputed output.",
+              "verifiedAt": "2026-08-20T00:00:00.000Z",
+              "verifiedSdkVersion": "0.1.0",
+              "verifiedApplicationBuild": "brochure-main-847efae8"
+            }
+          }
+        ],
+        "postconditions": [
+          {
+            "kind": "text_visible",
+            "text": "₹43,20,000 – ₹1,72,80,000"
+          }
+        ]
+      },
+      "compatibility": [
+        {
+          "kind": "sable.step_compatibility",
+          "stepId": "roi-volume",
+          "classification": "SDK_DIRECT",
+          "reason": "The range input has the unique aria-label Monthly Patient Volume; the SDK's native input/change path is compatible with the MUI controlled slider.",
+          "verifiedAt": "2026-08-20T00:00:00.000Z",
+          "verifiedSdkVersion": "0.1.0",
+          "verifiedApplicationBuild": "brochure-main-847efae8"
+        },
+        {
+          "kind": "sable.step_compatibility",
+          "stepId": "roi-aov",
+          "classification": "SDK_DIRECT",
+          "reason": "The range input has the unique aria-label Average Revenue Per Patient and was verified against the live control.",
+          "verifiedAt": "2026-08-20T00:00:00.000Z",
+          "verifiedSdkVersion": "0.1.0",
+          "verifiedApplicationBuild": "brochure-main-847efae8"
+        },
+        {
+          "kind": "sable.step_compatibility",
+          "stepId": "roi-retention",
+          "classification": "SDK_DIRECT",
+          "reason": "The range input has the unique aria-label Current Patient Retention Rate and was verified against the live control.",
+          "verifiedAt": "2026-08-20T00:00:00.000Z",
+          "verifiedSdkVersion": "0.1.0",
+          "verifiedApplicationBuild": "brochure-main-847efae8"
+        },
+        {
+          "kind": "sable.step_compatibility",
+          "stepId": "roi-result",
+          "classification": "SDK_DIRECT",
+          "reason": "A native live interaction produced this exact recomputed output.",
+          "verifiedAt": "2026-08-20T00:00:00.000Z",
+          "verifiedSdkVersion": "0.1.0",
+          "verifiedApplicationBuild": "brochure-main-847efae8"
+        }
+      ],
+      "state": "approved",
+      "reliability": 0.96,
+      "sourceCitations": [
+        {
+          "kind": "exploration",
+          "sourceId": "exploration-2026-08-20-brochure",
+          "title": "NirogGyan brochure live DOM and deployed source build 847efae8"
+        }
+      ]
+    },
+    {
+      "kind": "sable.catalog.journey",
+      "id": "reveal-testimonial-statistics",
+      "version": 1,
+      "name": "Reveal the testimonial statistics",
+      "description": "Scroll the public testimonials page until its count-up figures are populated.",
+      "intents": [
+        "show the brochure statistics",
+        "why do the numbers say zero",
+        "reveal the customer numbers"
+      ],
+      "roles": [
+        "public"
+      ],
+      "risk": "read",
+      "inputSchema": {
+        "kind": "sable.journey_input_schema",
+        "properties": {},
+        "required": [],
+        "additionalProperties": false
+      },
+      "workflow": {
+        "kind": "sable.workflow",
+        "schemaVersion": 1,
+        "id": "reveal-testimonial-statistics",
+        "version": 1,
+        "name": "Reveal the testimonial statistics",
+        "startUrl": {
+          "kind": "literal",
+          "value": "https://www.brochure.niroggyan.com/testimonials"
+        },
+        "risk": "read",
+        "preconditions": [
+          {
+            "kind": "screen_matches",
+            "screenId": "testimonials",
+            "minimumConfidence": 0.55
+          }
+        ],
+        "steps": [
+          {
+            "id": "stats-scroll",
+            "kind": "action",
+            "action": "scroll",
+            "direction": "down",
+            "amount": 950,
+            "narration": "I'll scroll the statistics into view so their count-up animation runs.",
+            "compatibility": {
+              "kind": "sable.step_compatibility",
+              "stepId": "stats-scroll",
+              "classification": "SDK_DIRECT",
+              "reason": "The page scrolls on window; 950px at the verified 900px viewport brings the counters past their 50% in-view threshold.",
+              "verifiedAt": "2026-08-20T00:00:00.000Z",
+              "verifiedSdkVersion": "0.1.0",
+              "verifiedApplicationBuild": "brochure-main-847efae8"
+            }
+          },
+          {
+            "id": "stats-wait",
+            "kind": "action",
+            "action": "wait",
+            "until": {
+              "kind": "text_visible",
+              "text": "25+"
+            },
+            "timeoutMs": 5000,
+            "compatibility": {
+              "kind": "sable.step_compatibility",
+              "stepId": "stats-wait",
+              "classification": "SDK_DIRECT",
+              "reason": "The deployed counter animates for 2.5 seconds after entering view; the final text is observable.",
+              "verifiedAt": "2026-08-20T00:00:00.000Z",
+              "verifiedSdkVersion": "0.1.0",
+              "verifiedApplicationBuild": "brochure-main-847efae8"
+            }
+          },
+          {
+            "id": "stats-accuracy",
+            "kind": "assert",
+            "assertion": {
+              "kind": "text_visible",
+              "text": "99.9%"
+            },
+            "narration": "The site presents a 99.9% accuracy claim alongside its other animated statistics.",
+            "compatibility": {
+              "kind": "sable.step_compatibility",
+              "stepId": "stats-accuracy",
+              "classification": "SDK_DIRECT",
+              "reason": "Live scroll verification produced the final value rather than the initial zero.",
+              "verifiedAt": "2026-08-20T00:00:00.000Z",
+              "verifiedSdkVersion": "0.1.0",
+              "verifiedApplicationBuild": "brochure-main-847efae8"
+            }
+          }
+        ],
+        "postconditions": [
+          {
+            "kind": "text_visible",
+            "text": "1M+"
+          }
+        ]
+      },
+      "compatibility": [
+        {
+          "kind": "sable.step_compatibility",
+          "stepId": "stats-scroll",
+          "classification": "SDK_DIRECT",
+          "reason": "The page scrolls on window; 950px at the verified 900px viewport brings the counters past their 50% in-view threshold.",
+          "verifiedAt": "2026-08-20T00:00:00.000Z",
+          "verifiedSdkVersion": "0.1.0",
+          "verifiedApplicationBuild": "brochure-main-847efae8"
+        },
+        {
+          "kind": "sable.step_compatibility",
+          "stepId": "stats-wait",
+          "classification": "SDK_DIRECT",
+          "reason": "The deployed counter animates for 2.5 seconds after entering view; the final text is observable.",
+          "verifiedAt": "2026-08-20T00:00:00.000Z",
+          "verifiedSdkVersion": "0.1.0",
+          "verifiedApplicationBuild": "brochure-main-847efae8"
+        },
+        {
+          "kind": "sable.step_compatibility",
+          "stepId": "stats-accuracy",
+          "classification": "SDK_DIRECT",
+          "reason": "Live scroll verification produced the final value rather than the initial zero.",
+          "verifiedAt": "2026-08-20T00:00:00.000Z",
+          "verifiedSdkVersion": "0.1.0",
+          "verifiedApplicationBuild": "brochure-main-847efae8"
+        }
+      ],
+      "state": "approved",
+      "reliability": 0.97,
+      "sourceCitations": [
+        {
+          "kind": "exploration",
+          "sourceId": "exploration-2026-08-20-brochure",
+          "title": "NirogGyan brochure live DOM and deployed source build 847efae8"
+        }
+      ]
+    },
+    {
+      "kind": "sable.catalog.journey",
+      "id": "show-smart-reporting-overview",
+      "version": 1,
+      "name": "Explain Smart Reporting",
+      "description": "Ground a Smart Reporting explanation in the current page.",
+      "intents": [
+        "what is smart reporting",
+        "compare smart report and viz app",
+        "explain reporting options"
+      ],
+      "roles": [
+        "public"
+      ],
+      "risk": "read",
+      "inputSchema": {
+        "kind": "sable.journey_input_schema",
+        "properties": {},
+        "required": [],
+        "additionalProperties": false
+      },
+      "workflow": {
+        "kind": "sable.workflow",
+        "schemaVersion": 1,
+        "id": "show-smart-reporting-overview",
+        "version": 1,
+        "name": "Explain Smart Reporting",
+        "startUrl": {
+          "kind": "literal",
+          "value": "https://www.brochure.niroggyan.com/smartReporting"
+        },
+        "risk": "read",
+        "preconditions": [
+          {
+            "kind": "screen_matches",
+            "screenId": "smart-reporting",
+            "minimumConfidence": 0.55
+          }
+        ],
+        "steps": [
+          {
+            "id": "sr-overview",
+            "kind": "assert",
+            "assertion": {
+              "kind": "text_visible",
+              "text": "Next-Generation Smart Reporting"
+            },
+            "narration": "The brochure presents two formats: a professional Smart Report PDF and an interactive Viz App.",
+            "compatibility": {
+              "kind": "sable.step_compatibility",
+              "stepId": "sr-overview",
+              "classification": "SDK_DIRECT",
+              "reason": "The comparison section was verified in the live DOM.",
+              "verifiedAt": "2026-08-20T00:00:00.000Z",
+              "verifiedSdkVersion": "0.1.0",
+              "verifiedApplicationBuild": "brochure-main-847efae8"
+            }
+          }
+        ],
+        "postconditions": [
+          {
+            "kind": "text_visible",
+            "text": "Advanced Capabilities"
+          }
+        ]
+      },
+      "compatibility": [
+        {
+          "kind": "sable.step_compatibility",
+          "stepId": "sr-overview",
+          "classification": "SDK_DIRECT",
+          "reason": "The comparison section was verified in the live DOM.",
+          "verifiedAt": "2026-08-20T00:00:00.000Z",
+          "verifiedSdkVersion": "0.1.0",
+          "verifiedApplicationBuild": "brochure-main-847efae8"
+        }
+      ],
+      "state": "approved",
+      "reliability": 0.96,
+      "sourceCitations": [
+        {
+          "kind": "exploration",
+          "sourceId": "exploration-2026-08-20-brochure",
+          "title": "NirogGyan brochure live DOM and deployed source build 847efae8"
+        }
+      ]
+    },
+    {
+      "kind": "sable.catalog.journey",
+      "id": "open-smart-report-from-repeated-button",
+      "version": 1,
+      "name": "Open Smart Report from the repeated user-journey buttons",
+      "description": "Both buttons work for a person, but the resolver correctly refuses their tied accessible names.",
+      "intents": [
+        "open smart report from user journey",
+        "view the smart report"
+      ],
+      "roles": [
+        "public"
+      ],
+      "risk": "read",
+      "inputSchema": {
+        "kind": "sable.journey_input_schema",
+        "properties": {},
+        "required": [],
+        "additionalProperties": false
+      },
+      "workflow": {
+        "kind": "sable.workflow",
+        "schemaVersion": 1,
+        "id": "open-smart-report-from-repeated-button",
+        "version": 1,
+        "name": "Open Smart Report from the repeated user-journey buttons",
+        "startUrl": {
+          "kind": "literal",
+          "value": "https://www.brochure.niroggyan.com/user-journey"
+        },
+        "risk": "read",
+        "preconditions": [
+          {
+            "kind": "screen_matches",
+            "screenId": "user-journey",
+            "minimumConfidence": 0.55
+          }
+        ],
+        "steps": [
+          {
+            "id": "uj-open-smart-report",
+            "kind": "action",
+            "action": "click",
+            "target": {
+              "controlId": "uj-view-smart-report-repeated",
+              "screenId": "user-journey"
+            },
+            "compatibility": {
+              "kind": "sable.step_compatibility",
+              "stepId": "uj-open-smart-report",
+              "classification": "NEEDS_STABLE_MARKER",
+              "reason": "Two enabled buttons have the same role and accessible name, no IDs/test IDs, and only generated ancestors. The resolver returns CONTROL_AMBIGUOUS.",
+              "verifiedAt": "2026-08-20T00:00:00.000Z",
+              "verifiedSdkVersion": "0.1.0",
+              "verifiedApplicationBuild": "brochure-main-847efae8"
+            }
+          }
+        ],
+        "postconditions": [
+          {
+            "kind": "url_matches",
+            "pattern": "^https://www\\.brochure\\.niroggyan\\.com/smartReport/?$"
+          }
+        ]
+      },
+      "compatibility": [
+        {
+          "kind": "sable.step_compatibility",
+          "stepId": "uj-open-smart-report",
+          "classification": "NEEDS_STABLE_MARKER",
+          "reason": "Two enabled buttons have the same role and accessible name, no IDs/test IDs, and only generated ancestors. The resolver returns CONTROL_AMBIGUOUS.",
+          "verifiedAt": "2026-08-20T00:00:00.000Z",
+          "verifiedSdkVersion": "0.1.0",
+          "verifiedApplicationBuild": "brochure-main-847efae8"
+        }
+      ],
+      "state": "verified",
+      "reliability": 0.4,
+      "manualHandoff": {
+        "reason": "The two View Smart Report controls tie at the top resolver score.",
+        "instructions": [
+          "Ask the user to click either View Smart Report button.",
+          "For SDK automation, give each button a distinct aria-label or data-sable-id."
+        ]
+      },
+      "sourceCitations": [
+        {
+          "kind": "exploration",
+          "sourceId": "exploration-2026-08-20-brochure",
+          "title": "NirogGyan brochure live DOM and deployed source build 847efae8"
+        }
+      ]
+    },
+    {
+      "kind": "sable.catalog.journey",
+      "id": "open-external-viz-demo",
+      "version": 1,
+      "name": "Open the external Viz App demo",
+      "description": "The brochure opens a separate-origin application in a new tab.",
+      "intents": [
+        "try the viz app",
+        "open the viz app demo"
+      ],
+      "roles": [
+        "public"
+      ],
+      "risk": "external_side_effect",
+      "inputSchema": {
+        "kind": "sable.journey_input_schema",
+        "properties": {},
+        "required": [],
+        "additionalProperties": false
+      },
+      "workflow": {
+        "kind": "sable.workflow",
+        "schemaVersion": 1,
+        "id": "open-external-viz-demo",
+        "version": 1,
+        "name": "Open the external Viz App demo",
+        "startUrl": {
+          "kind": "literal",
+          "value": "https://www.brochure.niroggyan.com/vizApp"
+        },
+        "risk": "external_side_effect",
+        "preconditions": [
+          {
+            "kind": "screen_matches",
+            "screenId": "viz-app",
+            "minimumConfidence": 0.55
+          }
+        ],
+        "steps": [
+          {
+            "id": "viz-external",
+            "kind": "action",
+            "action": "click",
+            "target": {
+              "controlId": "viz-try-now",
+              "screenId": "viz-app"
+            },
+            "compatibility": {
+              "kind": "sable.step_compatibility",
+              "stepId": "viz-external",
+              "classification": "NEEDS_USER_GESTURE",
+              "reason": "The handler calls window.open for https://www.demo-vizapp.niroggyan.com/overview. It leaves the authorized origin and opens a new tab.",
+              "verifiedAt": "2026-08-20T00:00:00.000Z",
+              "verifiedSdkVersion": "0.1.0",
+              "verifiedApplicationBuild": "brochure-main-847efae8"
+            }
+          }
+        ],
+        "postconditions": []
+      },
+      "compatibility": [
+        {
+          "kind": "sable.step_compatibility",
+          "stepId": "viz-external",
+          "classification": "NEEDS_USER_GESTURE",
+          "reason": "The handler calls window.open for https://www.demo-vizapp.niroggyan.com/overview. It leaves the authorized origin and opens a new tab.",
+          "verifiedAt": "2026-08-20T00:00:00.000Z",
+          "verifiedSdkVersion": "0.1.0",
+          "verifiedApplicationBuild": "brochure-main-847efae8"
+        }
+      ],
+      "state": "verified",
+      "reliability": 0.9,
+      "manualHandoff": {
+        "reason": "Opening the separate demo application requires a genuine user gesture and leaves the brochure origin.",
+        "instructions": [
+          "Ask the user to click Try Now.",
+          "Treat the opened application as a separate product surface and catalog scope."
+        ]
+      },
+      "sourceCitations": [
+        {
+          "kind": "exploration",
+          "sourceId": "exploration-2026-08-20-brochure",
+          "title": "NirogGyan brochure live DOM and deployed source build 847efae8"
+        }
+      ]
+    },
+    {
+      "kind": "sable.catalog.journey",
+      "id": "open-external-corporate-dashboard",
+      "version": 1,
+      "name": "Open the external corporate dashboard",
+      "description": "The engagement page opens a separate dashboard login in a new tab.",
+      "intents": [
+        "try the corporate dashboard",
+        "open the analytics dashboard"
+      ],
+      "roles": [
+        "public"
+      ],
+      "risk": "external_side_effect",
+      "inputSchema": {
+        "kind": "sable.journey_input_schema",
+        "properties": {},
+        "required": [],
+        "additionalProperties": false
+      },
+      "workflow": {
+        "kind": "sable.workflow",
+        "schemaVersion": 1,
+        "id": "open-external-corporate-dashboard",
+        "version": 1,
+        "name": "Open the external corporate dashboard",
+        "startUrl": {
+          "kind": "literal",
+          "value": "https://www.brochure.niroggyan.com/engagement"
+        },
+        "risk": "external_side_effect",
+        "preconditions": [
+          {
+            "kind": "screen_matches",
+            "screenId": "engagement",
+            "minimumConfidence": 0.55
+          }
+        ],
+        "steps": [
+          {
+            "id": "eng-external-dashboard",
+            "kind": "action",
+            "action": "click",
+            "target": {
+              "controlId": "eng-corporate-try-now",
+              "screenId": "engagement"
+            },
+            "compatibility": {
+              "kind": "sable.step_compatibility",
+              "stepId": "eng-external-dashboard",
+              "classification": "NEEDS_USER_GESTURE",
+              "reason": "The handler opens https://demo-corporate-dashboard.niroggyan.com/login in a new tab; authentication and the external origin are outside this catalog.",
+              "verifiedAt": "2026-08-20T00:00:00.000Z",
+              "verifiedSdkVersion": "0.1.0",
+              "verifiedApplicationBuild": "brochure-main-847efae8"
+            }
+          }
+        ],
+        "postconditions": []
+      },
+      "compatibility": [
+        {
+          "kind": "sable.step_compatibility",
+          "stepId": "eng-external-dashboard",
+          "classification": "NEEDS_USER_GESTURE",
+          "reason": "The handler opens https://demo-corporate-dashboard.niroggyan.com/login in a new tab; authentication and the external origin are outside this catalog.",
+          "verifiedAt": "2026-08-20T00:00:00.000Z",
+          "verifiedSdkVersion": "0.1.0",
+          "verifiedApplicationBuild": "brochure-main-847efae8"
+        }
+      ],
+      "state": "verified",
+      "reliability": 0.9,
+      "manualHandoff": {
+        "reason": "The corporate dashboard is a separate authenticated application.",
+        "instructions": [
+          "Ask the user to click Try Now.",
+          "Do not enter credentials or claim dashboard coverage from this brochure catalog."
+        ]
+      },
+      "sourceCitations": [
+        {
+          "kind": "exploration",
+          "sourceId": "exploration-2026-08-20-brochure",
+          "title": "NirogGyan brochure live DOM and deployed source build 847efae8"
+        }
+      ]
+    },
+    {
+      "kind": "sable.catalog.journey",
+      "id": "open-external-consumer-analyzer",
+      "version": 1,
+      "name": "Open the external consumer analyzer",
+      "description": "The engagement CTA opens niro.health in a separate tab.",
+      "intents": [
+        "discover the ai tools",
+        "open the consumer analyzer"
+      ],
+      "roles": [
+        "public"
+      ],
+      "risk": "external_side_effect",
+      "inputSchema": {
+        "kind": "sable.journey_input_schema",
+        "properties": {},
+        "required": [],
+        "additionalProperties": false
+      },
+      "workflow": {
+        "kind": "sable.workflow",
+        "schemaVersion": 1,
+        "id": "open-external-consumer-analyzer",
+        "version": 1,
+        "name": "Open the external consumer analyzer",
+        "startUrl": {
+          "kind": "literal",
+          "value": "https://www.brochure.niroggyan.com/engagement"
+        },
+        "risk": "external_side_effect",
+        "preconditions": [
+          {
+            "kind": "screen_matches",
+            "screenId": "engagement",
+            "minimumConfidence": 0.55
+          }
+        ],
+        "steps": [
+          {
+            "id": "eng-external-analyzer",
+            "kind": "action",
+            "action": "click",
+            "target": {
+              "controlId": "eng-discover-ai-tools",
+              "screenId": "engagement"
+            },
+            "compatibility": {
+              "kind": "sable.step_compatibility",
+              "stepId": "eng-external-analyzer",
+              "classification": "NEEDS_USER_GESTURE",
+              "reason": "The handler calls window.open for https://www.niro.health/. That is another origin and another product catalog.",
+              "verifiedAt": "2026-08-20T00:00:00.000Z",
+              "verifiedSdkVersion": "0.1.0",
+              "verifiedApplicationBuild": "brochure-main-847efae8"
+            }
+          }
+        ],
+        "postconditions": []
+      },
+      "compatibility": [
+        {
+          "kind": "sable.step_compatibility",
+          "stepId": "eng-external-analyzer",
+          "classification": "NEEDS_USER_GESTURE",
+          "reason": "The handler calls window.open for https://www.niro.health/. That is another origin and another product catalog.",
+          "verifiedAt": "2026-08-20T00:00:00.000Z",
+          "verifiedSdkVersion": "0.1.0",
+          "verifiedApplicationBuild": "brochure-main-847efae8"
+        }
+      ],
+      "state": "verified",
+      "reliability": 0.9,
+      "manualHandoff": {
+        "reason": "The consumer analyzer is outside the brochure origin.",
+        "instructions": [
+          "Ask the user to click Discover AI Tools.",
+          "Use the separate niro catalog for that site rather than extending this brochure catalog."
+        ]
+      },
+      "sourceCitations": [
+        {
+          "kind": "exploration",
+          "sourceId": "exploration-2026-08-20-brochure",
+          "title": "NirogGyan brochure live DOM and deployed source build 847efae8"
+        }
+      ]
+    }
+  ],
+  "tools": [],
+  "privacyPolicy": {
+    "kind": "sable.catalog.privacy_policy",
+    "schemaVersion": 1,
+    "defaultTextTreatment": "allow",
+    "screenshots": "disabled",
+    "excludedRoutes": [],
+    "rules": [
+      {
+        "kind": "input_type",
+        "inputType": "password",
+        "action": "exclude"
+      },
+      {
+        "kind": "input_type",
+        "inputType": "hidden",
+        "action": "exclude"
+      },
+      {
+        "kind": "input_type",
+        "inputType": "email",
+        "action": "redact",
+        "replacement": "[email]"
+      },
+      {
+        "kind": "input_type",
+        "inputType": "tel",
+        "action": "redact",
+        "replacement": "[phone]"
+      },
+      {
+        "kind": "selector",
+        "selector": "input[autocomplete='username'], input[autocomplete='current-password'], input[autocomplete='new-password'], input[autocomplete='one-time-code'], input[name*='password' i], input[name*='token' i], input[name*='secret' i]",
+        "action": "exclude"
+      },
+      {
+        "kind": "selector",
+        "selector": "iframe[title='Language Translate Widget'], iframe[name='votingFrame'], form[action^='https://translate.googleapis.com/'], [id^='goog-gt-'], [class^='VIpgJd-'], [class*=' VIpgJd-'], .goog-te-gadget, .goog-te-combo, .skiptranslate",
+        "action": "exclude"
+      },
+      {
+        "kind": "selector",
+        "selector": "iframe[src*='meetings.hubspot.com']",
+        "action": "exclude"
+      },
+      {
+        "kind": "attribute",
+        "attribute": "autocomplete",
+        "value": "cc-number",
+        "action": "exclude"
+      },
+      {
+        "kind": "attribute",
+        "attribute": "data-private",
+        "action": "redact",
+        "replacement": "[private]"
+      },
+      {
+        "kind": "text_pattern",
+        "pattern": "\\b(?!sales@niroggyan\\.com)[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}\\b",
+        "flags": "g",
+        "action": "redact",
+        "replacement": "[email]"
+      }
+    ],
+    "maximumVisibleTextChars": 25000,
+    "allowElementValues": false
+  },
+  "telemetryPolicy": {
+    "kind": "sable.catalog.telemetry_policy",
+    "schemaVersion": 1,
+    "enabled": true,
+    "sampleRate": 1,
+    "allowedEvents": [
+      "session.started",
+      "session.stopped",
+      "catalog.loaded",
+      "screen.matched",
+      "element.resolved",
+      "action.completed",
+      "journey.started",
+      "journey.completed",
+      "journey.failed",
+      "approval.requested",
+      "approval.resolved",
+      "privacy.redacted",
+      "transport.state",
+      "sdk.error"
+    ],
+    "batchMaximumEvents": 50,
+    "flushIntervalMs": 5000,
+    "includeVisibleText": false,
+    "includeElementValues": false
+  }
+}

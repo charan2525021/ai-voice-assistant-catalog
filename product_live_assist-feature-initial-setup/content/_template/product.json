@@ -1,0 +1,14 @@
+{
+  "name": "YOUR PRODUCT NAME",
+  "startUrl": "https://app.yourproduct.com",
+  "note": "Copy this folder to content/<your-product>/, fill in these files, then set PRODUCT=<your-product> in aidan/.env",
+  "auth": {
+    "mode": "none"
+  },
+  "allowActions": [],
+  "createdAt": "2026-07-26T14:36:05.838919",
+  "onboarding": {
+    "status": "new",
+    "verifiedJourneys": 0
+  }
+}

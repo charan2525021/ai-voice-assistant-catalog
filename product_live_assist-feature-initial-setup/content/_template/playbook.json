@@ -1,0 +1,31 @@
+[
+  {
+    "kind": "value_prop",
+    "personas": ["REPLACE_persona_id"],
+    "keywords": ["trigger", "words"],
+    "content": "The outcome this persona gets, ideally quantified (e.g. 'saves ~5 hrs/week of manual reporting')."
+  },
+  {
+    "kind": "objection",
+    "personas": ["*"],
+    "keywords": ["expensive", "cost", "price"],
+    "content": "Your best response to the price objection."
+  },
+  {
+    "kind": "objection",
+    "personas": ["*"],
+    "keywords": ["already", "competitor", "switch"],
+    "content": "Your best response to 'we already use X'."
+  },
+  {
+    "kind": "discovery",
+    "personas": ["*"],
+    "content": "A question that qualifies without interrogating (e.g. 'What are you using today, and where does it fall short?')."
+  },
+  {
+    "kind": "positioning",
+    "personas": ["*"],
+    "keywords": ["compare", "different", "why"],
+    "content": "How you position against alternatives in one line."
+  }
+]

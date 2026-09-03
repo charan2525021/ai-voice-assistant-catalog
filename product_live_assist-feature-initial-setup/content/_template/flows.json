@@ -1,0 +1,15 @@
+[
+  {
+    "name": "REPLACE — a golden-path demo",
+    "feature": "the feature this shows off",
+    "intents": ["show me X", "how do I X", "can you X"],
+    "steps": [
+      "First UI step, phrased as an instruction ('Click the Reports tab')",
+      "Second step ('Choose the Weekly template')",
+      "Third step ('Point out the auto-refresh toggle')"
+    ],
+    "talkingPoints": ["The one-sentence 'why this matters' Aidan should say while showing it."],
+    "prerequisites": "anything that must exist first (e.g. 'a saved report')",
+    "resetSteps": "how to undo it so the next demo starts clean"
+  }
+]

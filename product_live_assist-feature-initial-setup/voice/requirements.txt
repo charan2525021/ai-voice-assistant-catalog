@@ -1,0 +1,18 @@
+# Lean voice (STT) service dependencies.
+# Trimmed from the original: httpx and python-dotenv REMOVED (only the webhook /
+# session-API code used httpx; config no longer needs dotenv), pydantic /
+# pydantic-settings REMOVED (config.py is now a plain dataclass).
+
+websockets>=12.0        # the STT WebSocket server (required)
+
+# Only needed for production STT (ASR_PROVIDER=sarvam). Mock mode needs nothing else:
+sarvamai
+
+# Local voice (default). No API key, no per-minute cost, and measurably faster:
+#   whisper base.en   86ms for 2.7s of speech (31x realtime) on an M1 Pro
+#   kokoro           ~520ms for a 3s line (5.9x realtime), CPU only
+# Requires ffmpeg on PATH for audio decoding (brew install ffmpeg).
+mlx-whisper          # Apple Silicon (Metal). On Linux/CUDA use faster-whisper.
+kokoro               # 82M-param TTS, runs on CPU
+soundfile
+numpy

@@ -1,0 +1,9 @@
+[
+  {
+    "id": "REPLACE_persona_id",
+    "name": "Persona name (e.g. RevOps lead)",
+    "role": "What they do day to day",
+    "pains": ["the problem they feel", "another pain"],
+    "keywords": ["words", "they", "use", "that", "signal", "this", "persona"]
+  }
+]

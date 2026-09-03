@@ -1,0 +1,49 @@
+{
+  "name": "@sable/sdk-testkit",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Independent fixtures, mock cloud services, and supervisor-only browser helpers for the Sable Web SDK",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./catalog": {
+      "types": "./dist/catalog-fixtures.d.ts",
+      "import": "./dist/catalog-fixtures.js"
+    },
+    "./fixtures": {
+      "types": "./dist/fixtures/index.d.ts",
+      "import": "./dist/fixtures/index.js"
+    },
+    "./mock-cloud": {
+      "types": "./dist/mock-cloud.d.ts",
+      "import": "./dist/mock-cloud.js"
+    },
+    "./supervisor": {
+      "types": "./dist/supervisor-guard.d.ts",
+      "import": "./dist/supervisor-guard.js"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "typecheck": "tsc -p tsconfig.json",
+    "test": "node --import tsx --test test/*.test.ts"
+  },
+  "dependencies": {
+    "@sable/sdk-contracts": "0.1.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.7.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.6.0"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

@@ -1,0 +1,22 @@
+{
+  "organizationId": "00000000-0000-4000-8000-000000000001",
+  "name": "LLM API v2",
+  "startUrl": "https://app.llmapi.ai/dashboard",
+  "auth": {
+    "mode": "session",
+    "sessionCapturedAt": "2026-08-13T11:40:42.664Z",
+    "sessionOrigins": [
+      "https://app.llmapi.ai"
+    ]
+  },
+  "allowActions": [],
+  "voice": {},
+  "createdAt": "2026-08-13T11:32:52.600Z",
+  "onboarding": {
+    "status": "ready",
+    "message": "Ready — 10 approved journey(s).",
+    "updatedAt": "2026-08-13T13:39:08.128Z",
+    "docChunks": 584,
+    "verifiedJourneys": 10
+  }
+}

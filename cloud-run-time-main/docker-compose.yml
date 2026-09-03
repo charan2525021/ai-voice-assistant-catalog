@@ -1,0 +1,21 @@
+services:
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: sable
+      POSTGRES_PASSWORD: sable
+      POSTGRES_DB: sable_runtime
+    ports: ["5432:5432"]
+    volumes:
+      - sable-runtime-postgres:/var/lib/postgresql/data
+      - ./migrations:/docker-entrypoint-initdb.d:ro
+  runtime:
+    build: .
+    env_file: .env
+    environment:
+      RUNTIME_STORE: postgres
+      DATABASE_URL: postgres://sable:sable@postgres:5432/sable_runtime
+    ports: ["8787:8787"]
+    depends_on: [postgres]
+volumes:
+  sable-runtime-postgres:

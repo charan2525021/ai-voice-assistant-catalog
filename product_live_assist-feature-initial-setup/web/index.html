@@ -1,0 +1,1030 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Tia — Live Demo</title>
+    <style>
+      * { box-sizing: border-box; }
+      body { margin: 0; font-family: -apple-system, Segoe UI, Roboto, sans-serif; background: #0f1115; color: #e6e8ec; height: 100vh; display: flex; }
+      #stage { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+      #bar { padding: 10px 16px; background: #171a21; border-bottom: 1px solid #262b36; display: flex; align-items: center; gap: 10px; }
+      #bar .dot { width: 9px; height: 9px; border-radius: 50%; background: #f0b429; }
+      #bar .dot.live { background: #21c07a; }
+      #bar .brain { margin-left: auto; font-size: 12px; color: #8a93a3; }
+      #view { flex: 1; position: relative; background: #000; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+      #screen { max-width: 100%; max-height: 100%; cursor: pointer; display: none; }
+      #ph { position: absolute; color: #6b7280; }
+      #chat { width: 380px; background: #12151b; border-left: 1px solid #262b36; display: flex; flex-direction: column; }
+      #log { flex: 1; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 10px; }
+      .msg { padding: 10px 12px; border-radius: 12px; max-width: 90%; line-height: 1.4; font-size: 14px; }
+      .msg .speaker { display:block; margin-bottom:4px; font-size:10px; line-height:1; font-weight:700; letter-spacing:.08em; text-transform:uppercase; opacity:.68; }
+      .msg .messageText { white-space:pre-wrap; }
+      .aidan { background: #1d2530; align-self: flex-start; }
+      .proactive { background: #1d2530; align-self: flex-start; border-left: 3px solid #f0b429; }
+      .proactive::before { content: "👀 noticed"; display: block; font-size: 11px; color: #f0b429; margin-bottom: 4px; letter-spacing: .3px; }
+      .me { background: #2b6cb0; align-self: flex-end; }
+      .status { color: #8a93a3; font-size: 12px; align-self: flex-start; font-style: italic; }
+      #composer { display: flex; padding: 12px; gap: 8px; border-top: 1px solid #262b36; }
+      #composer input { flex: 1; background: #0f1115; border: 1px solid #2a3140; color: #e6e8ec; border-radius: 10px; padding: 10px 12px; font-size: 14px; }
+      #composer button { background: #2b6cb0; color: #fff; border: 0; border-radius: 10px; padding: 0 16px; font-weight: 600; cursor: pointer; }
+      #composer button:disabled { opacity: .5; cursor: default; }
+      #composer #mic { background: #2a3140; font-size: 15px; padding: 0 12px; }
+      #composer #mic.recording { background: #c0392b; }
+      #bar select { background:#0f1115;color:#e6e8ec;border:1px solid #2a3140;border-radius:8px;padding:5px 8px;font-size:13px;max-width:220px; }
+      #bar button.mini { background:#2a3140;color:#e6e8ec;border:0;border-radius:8px;padding:5px 10px;font-size:12px;cursor:pointer; }
+      #modeWrap { display:inline-flex;gap:2px;margin-left:4px; }
+      #modeWrap .modeBtn { border-radius:0; } #modeWrap .modeBtn:first-child { border-radius:8px 0 0 8px; }
+      #modeWrap .modeBtn:last-child { border-radius:0 8px 8px 0; }
+      #modeWrap .modeBtn.on { background:#2b6cb0;color:#fff; }
+      #modal { position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;align-items:center;justify-content:center;z-index:50; }
+      #modal.open { display:flex; }
+      #modal .card { background:#171a21;border:1px solid #2a3140;border-radius:14px;padding:20px;width:440px;max-width:92vw; }
+      #modal h3 { margin:0 0 4px;font-size:16px; } #modal p.hint { margin:0 0 14px;color:#8a93a3;font-size:12px;line-height:1.5; }
+      #modal label { display:block;font-size:12px;color:#8a93a3;margin:10px 0 4px; }
+      #modal input, #modal textarea { width:100%;background:#0f1115;border:1px solid #2a3140;color:#e6e8ec;border-radius:8px;padding:9px 10px;font-size:13px;font-family:inherit;resize:vertical; }
+      #modal .row { display:flex;gap:10px; } #modal .row > div { flex:1; }
+      #modal .actions { display:flex;gap:8px;justify-content:flex-end;margin-top:16px; }
+      #modal button { border:0;border-radius:9px;padding:9px 14px;font-weight:600;cursor:pointer; }
+      #modal .go { background:#2b6cb0;color:#fff; } #modal .cancel { background:#2a3140;color:#e6e8ec; }
+      #onboardLog { margin-top:12px;max-height:150px;overflow:auto;font-size:12px;color:#8a93a3;white-space:pre-wrap;line-height:1.5; }
+      /* Opening state: a demo that starts on a blank panel reads as broken. */
+      #welcome { padding:18px 16px; border-bottom:1px solid #1b2029; }
+      #welcome h4 { margin:0 0 6px; font-size:15px; }
+      #welcome p { margin:0 0 12px; font-size:12.5px; color:#8a93a3; line-height:1.6; }
+      #welcome .op { display:block; width:100%; text-align:left; background:#151a22; border:1px solid #232a35;
+                     color:#dfe5ee; border-radius:9px; padding:9px 11px; margin-bottom:7px; font-size:12.5px; cursor:pointer; }
+      #welcome .op:hover { background:#1b2230; border-color:#2f3a4a; }
+      #welcome .op b { color:#7aa2f7; font-weight:600; }
+      /* A way to shut it up. There was none, which is indefensible for a product
+         whose whole surface is a voice that talks. */
+      #stop { background:#7f1d1d; border:1px solid #b91c1c; color:#fecaca; border-radius:9px;
+              padding:8px 12px; font-size:13px; cursor:pointer; font-weight:600; }
+      #stop:hover:not(:disabled) { background:#991b1b; }
+      #stop:disabled { opacity:.35; cursor:default; }
+      #stop.hot { background:#dc2626; color:#fff; }
+    </style>
+  </head>
+  <body>
+    <div id="stage">
+      <div id="bar">
+        <span class="dot" id="dot"></span>
+        <select id="productPick" title="Choose which product to demo"></select>
+        <button class="mini" id="addProduct">+ Add product</button>
+        <a class="mini" id="adminLink" href="/admin.html" target="_blank" style="text-decoration:none;padding:5px 10px;background:#2a3140;color:#e6e8ec;border-radius:8px;font-size:12px">⚙︎ Admin</a>
+        <span id="modeWrap" title="Text = type and read. Voice = speak and listen.">
+          <button class="mini modeBtn" id="modeText">💬 Text</button><button class="mini modeBtn" id="modeVoice">🎧 Voice</button>
+        </span>
+        <span class="brain" id="brain"></span>
+      </div>
+      <div id="view"><span id="ph">Launching the browser…</span><img id="screen" alt="live demo" /></div>
+    </div>
+    <div id="modal">
+      <div class="card">
+        <h3>Add a product</h3>
+        <p class="hint">Tia will check it's reachable, sign in if needed, then map and verify its journeys on its own. Docs are optional but they're what stop it guessing — drop .md files into <code>content/&lt;id&gt;/docs/</code>.</p>
+        <label>Product name</label><input id="pName" placeholder="Acme CRM" />
+        <label>Start URL</label><input id="pUrl" placeholder="https://app.acme.com" />
+        <div class="row">
+          <div><label>Username (if it needs a login)</label><input id="pUser" placeholder="optional" /></div>
+          <div><label>Password</label><input id="pPass" type="password" placeholder="optional" /></div>
+        </div>
+        <label>Allow these actions (comma separated, sandbox only)</label>
+        <input id="pAllow" placeholder="e.g. checkout, buy — leave empty to block all destructive actions" />
+        <label>Product docs — paste anything you have (optional, but stops it guessing)</label>
+        <textarea id="pDocs" rows="4" placeholder="Paste help-centre text, feature descriptions, FAQs…&#10;Tia may only state facts that appear here."></textarea>
+        <label>Or doc URLs to crawl (one per line)</label>
+        <textarea id="pSources" rows="2" placeholder="https://docs.yourproduct.com/getting-started"></textarea>
+        <label>Upload .md / .txt files</label>
+        <input id="pFiles" type="file" multiple accept=".md,.txt,.markdown" />
+        <div id="onboardLog"></div>
+        <div class="actions">
+          <button class="cancel" id="pCancel">Cancel</button>
+          <button class="go" id="pGo">Add &amp; map</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="chat">
+      <div id="log"></div>
+      <div id="composer">
+        <input id="input" placeholder="Ask Tia, or tap the mic and speak…" autocomplete="off" disabled />
+        <button id="stop" title="Stop talking (Esc)" disabled>■ Stop</button>
+        <button id="mic" title="Speak to Tia" disabled>🎤</button>
+        <button id="send" disabled>Send</button>
+      </div>
+    </div>
+
+    <script>
+      const log = document.getElementById("log");
+      const input = document.getElementById("input");
+      const sendBtn = document.getElementById("send");
+      const dot = document.getElementById("dot");
+      const brainEl = document.getElementById("brain");
+      const screen = document.getElementById("screen");
+      const ph = document.getElementById("ph");
+      let statusEl = null, ws = null, demoSocketGeneration = 0;
+      const pendingVoiceBubbles = new Map();
+
+      function settleVoiceBubble(message, accepted) {
+        const id = String(message.clientMessageId || "");
+        const entry = pendingVoiceBubbles.get(id);
+        if (!entry) {
+          // A current server always echoes the id. This fallback only covers a
+          // rolling deploy where the browser and worker briefly straddle builds.
+          if (accepted && message.text) bubble(message.text, "me");
+          return;
+        }
+        clearTimeout(entry.fallback);
+        clearTimeout(entry.cleanup);
+        pendingVoiceBubbles.delete(id);
+        if (accepted && !entry.displayed) bubble(message.text || entry.text, "me");
+      }
+
+      function bubble(text, cls) {
+        const d = document.createElement("div");
+        d.className = "msg " + cls;
+        const speaker = document.createElement("span");
+        speaker.className = "speaker";
+        speaker.textContent = cls === "me" ? "You" : (cls === "proactive" ? `${ASSISTANT} · suggestion` : ASSISTANT);
+        const body = document.createElement("span");
+        body.className = "messageText"; body.textContent = text;
+        d.append(speaker, body);
+        d.setAttribute("aria-label", `${speaker.textContent}: ${text}`);
+        log.appendChild(d); log.scrollTop = log.scrollHeight;
+      }
+      function setStatus(text) {
+        if (statusEl) { statusEl.remove(); statusEl = null; }
+        if (text) { statusEl = document.createElement("div"); statusEl.className = "status"; statusEl.textContent = text; log.appendChild(statusEl); log.scrollTop = log.scrollHeight; }
+      }
+
+      let currentProduct = null;
+      // "voice" = speak and listen; "text" = type and read. Two separate workflows.
+      let mode = localStorage.getItem("aidanMode") === "text" ? "text" : "voice";
+
+      function applyMode() {
+        document.getElementById("modeText").classList.toggle("on", mode === "text");
+        document.getElementById("modeVoice").classList.toggle("on", mode === "voice");
+        // In text mode the mic is meaningless; in voice mode typing still works.
+        micBtn.style.display = mode === "voice" ? "" : "none";
+        input.placeholder = mode === "voice" ? "Tap the mic and speak, or type…" : `Ask ${ASSISTANT} anything…`;
+        if (mode === "text") { audioQ.flush(); audioQ.muted = true; if (recording) stopMic(); }
+        // Voice mode means it is LISTENING — not "press to talk".
+        else { audioQ.muted = false; if (!recording) startMic().catch(() => {}); }
+        localStorage.setItem("aidanMode", mode);
+      }
+
+      function setMode(next) {
+        if (next === mode) return;
+        mode = next; applyMode();
+        if (ws && ws.readyState === 1) ws.send(JSON.stringify({ type: "set_mode", mode }));
+      }
+
+      /** Load the product list and populate the picker. Many products coexist. */
+      /**
+       * A prospect arriving on a share link has no account, so /api/products is
+       * correctly 401 for them. That must not break the page: the link names its
+       * product, which is the only one they are allowed to run anyway. Hide the
+       * operator chrome and go straight into the demo.
+       */
+      const SHARE = new URLSearchParams(location.search).get("share") || "";
+      const embedProduct = new URLSearchParams(location.search).get("product") || "default";
+      const embedStorageKey = "aidan.embed." + embedProduct;
+      const embedFromUrl = new URLSearchParams(location.search).get("embed") || "";
+      // Keep bearer material out of the address bar/referrer, but retain it for
+      // this product and this tab so a normal reload does not fall through to
+      // the operator login page. sessionStorage is deliberately tab-scoped and
+      // the key is product-scoped; navigating to another product cannot reuse it.
+      if (embedFromUrl) sessionStorage.setItem(embedStorageKey, embedFromUrl);
+      const EMBED = embedFromUrl || sessionStorage.getItem(embedStorageKey) || "";
+      if (embedFromUrl) {
+        const clean = new URL(location.href);
+        clean.searchParams.delete("embed");
+        history.replaceState(null, "", clean.pathname + clean.search + clean.hash);
+      }
+      let durableCatalogMode = false;
+      const durableRoles = new Map();
+      /** Append the least-privilege guest token to HTTP and WebSocket requests. */
+      function withShare(url) {
+        const key = EMBED ? "embed" : (SHARE ? "share" : "");
+        const token = EMBED || SHARE;
+        if (!token) return url;
+        return url + (url.includes("?") ? "&" : "?") + key + "=" + encodeURIComponent(token);
+      }
+
+      function enterGuestMode() {
+        for (const id of ["productPick", "addProduct", "adminLink"]) {
+          const el = document.getElementById(id);
+          if (el) el.style.display = "none";
+        }
+      }
+
+      async function loadProducts(select) {
+        const fromUrlEarly = new URLSearchParams(location.search).get("product");
+        if (EMBED) {
+          enterGuestMode();
+          durableCatalogMode = true;
+          durableRoles.set(fromUrlEarly, new URLSearchParams(location.search).get("role") || "");
+          return fromUrlEarly || "";
+        }
+        let res = await fetch("/api/v2/products");
+        if (res.ok) {
+          durableCatalogMode = true;
+          const durable = await res.json();
+          const products = durable.products.map((aggregate) => {
+            durableRoles.set(aggregate.product.id, aggregate.roles[0] && aggregate.roles[0].id);
+            return { id: aggregate.product.id, name: aggregate.product.name, verifiedJourneys: aggregate.product.activeCatalogVersionId ? 1 : 0 };
+          });
+          const pick = document.getElementById("productPick");
+          pick.innerHTML = "";
+          for (const p of products) {
+            const o = document.createElement("option");
+            o.value = p.id;
+            o.textContent = `${p.name} — ${p.verifiedJourneys ? "published" : "not published"}`;
+            pick.appendChild(o);
+          }
+          const chosen = select || fromUrlEarly || currentProduct || (products[0] && products[0].id);
+          if (chosen) pick.value = chosen;
+          return pick.value;
+        }
+        res = await fetch("/api/products");
+        if (res.status === 401) {
+          enterGuestMode();
+          return fromUrlEarly || "";
+        }
+        const { products, default: def } = await res.json();
+        const pick = document.getElementById("productPick");
+        pick.innerHTML = "";
+        for (const p of products) {
+          const o = document.createElement("option");
+          o.value = p.id;
+          const ready = p.verifiedJourneys > 0;
+          o.textContent = `${p.name} — ${ready ? p.verifiedJourneys + " flows" : (p.job && p.job.running ? "mapping…" : "not mapped")}`;
+          o.disabled = false;
+          pick.appendChild(o);
+        }
+        // ?product= lets the admin console deep-link straight into a demo.
+        const fromUrl = new URLSearchParams(location.search).get("product");
+        const chosen = select || fromUrl || currentProduct || def || (products[0] && products[0].id);
+        if (chosen) pick.value = chosen;
+        return pick.value;
+      }
+
+      /**
+       * Opening state. The suggestions are the journeys this product actually has
+       * verified — so they are specific to whatever was linked, and clicking one
+       * can never ask for something the agent has not proven it can do.
+       */
+      // Name the prospect hears and reads. Server-supplied; this is the fallback.
+      let ASSISTANT = "Tia";
+
+      function showWelcome(demo, openers) {
+        const list = (openers || []).filter(Boolean);
+        const w = document.createElement("div");
+        w.id = "welcome";
+        w.innerHTML =
+          `<h4>${escapeHtml(ASSISTANT)} here — your guide to ${escapeHtml(demo)}.</h4>` +
+          `<p>Ask me anything, or I can drive the product live while I explain what is happening. ` +
+          `You can take the controls yourself at any point.</p>` +
+          (list.length
+            ? list.map((o) => `<button type="button" class="op" data-q="Show me how to ${escapeHtml(o.charAt(0).toLowerCase()+o.slice(1))}">Show me how to <b>${escapeHtml(o.charAt(0).toLowerCase()+o.slice(1))}</b></button>`).join("")
+            : `<p style="color:#6f7887">No verified journeys yet for this product — ask a question, or map it from the admin console first.</p>`);
+        log.appendChild(w);
+        for (const btn of w.querySelectorAll(".op")) {
+          btn.onclick = () => { w.remove(); input.value = btn.dataset.q; submit(false); };
+        }
+      }
+
+      function escapeHtml(x) {
+        return String(x == null ? "" : x).replace(/[&<>"']/g, (c) => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[c]));
+      }
+
+      async function start(product) {
+        // Tear down any previous session so switching products is clean.
+        const socketGeneration = ++demoSocketGeneration;
+        if (ws) { try { ws.close(); } catch (e) {} ws = null; }
+        for (const entry of pendingVoiceBubbles.values()) { clearTimeout(entry.fallback); clearTimeout(entry.cleanup); }
+        pendingVoiceBubbles.clear();
+        screen.style.display = "none"; ph.style.display = "block"; ph.textContent = "Launching the browser…";
+        log.innerHTML = ""; dot.classList.remove("live");
+
+        const roleProfileId = new URLSearchParams(location.search).get("role") || durableRoles.get(product);
+        const durable = EMBED || (durableCatalogMode && roleProfileId);
+        const endpoint = EMBED ? "/api/v2/embed/session" : (durable ? "/api/v2/session" : "/api/session");
+        const res = await fetch(EMBED ? endpoint : withShare(endpoint), {
+          method: "POST", headers: { "content-type": "application/json", ...(EMBED ? { "x-aidan-embed-token": EMBED } : {}) },
+          body: JSON.stringify(durable ? { productId: product, roleProfileId, mode } : { product, mode }),
+        });
+        if (res.status === 401 && !SHARE && !EMBED) {
+          const next = location.pathname + location.search + location.hash;
+          location.href = "/login.html?next=" + encodeURIComponent(next);
+          return;
+        }
+        if (!res.ok) { ph.textContent = "Could not start: " + (await res.text()); return; }
+        const { sessionId, demo, brain, product: pid, openers, speechHints, assistant } = await res.json();
+        if (assistant) ASSISTANT = assistant;
+        window.__speechHints = speechHints || "";
+        currentProduct = pid;
+        showWelcome(demo, openers);
+        brainEl.textContent = "brain: " + brain;
+        dot.classList.add("live");
+
+        const proto = location.protocol === "https:" ? "wss" : "ws";
+        const entrySocket = proto + "://" + location.host + "/ws?sessionId=" + encodeURIComponent(sessionId);
+        let reconnectAttempt = 0;
+        function connectDemoSocket(target, redirects = 0) {
+        if (socketGeneration !== demoSocketGeneration) return;
+        const socket = new WebSocket(withShare(target));
+        let redirecting = false, fatal = false;
+        ws = socket;
+        socket.onmessage = (ev) => {
+          const m = JSON.parse(ev.data);
+          if (m.type === "redirect" && m.url && redirects < 3) {
+            redirecting = true;
+            try { socket.close(); } catch (e) {}
+            connectDemoSocket(m.url, redirects + 1);
+            return;
+          }
+          if (m.type === "audio") stopBtn.classList.add("hot");
+          if (m.type === "stop_audio") stopBtn.classList.remove("hot");
+          if (m.type === "frame") { screen.src = "data:image/jpeg;base64," + m.data; screen.style.display = "block"; ph.style.display = "none"; }
+          else if (m.type === "say") bubble(m.text, m.proactive ? "proactive" : "aidan");
+          else if (m.type === "user_accepted") settleVoiceBubble(m, true);
+          else if (m.type === "user_rejected") settleVoiceBubble(m, false);
+          else if (m.type === "status") setStatus(m.text);
+          else if (m.type === "error") { fatal = /unknown session|could not be recovered/i.test(m.text || ""); bubble(m.text, "aidan"); }
+          else if (m.type === "meta") brainEl.textContent = "brain: " + m.brain;
+          else if (m.type === "audio") { if (!audioQ.muted) audioQ.push({ seq: m.seq, mime: m.mime, b64: m.b64, gapMs: m.gapMs }); }
+          else if (m.type === "stop_audio") {
+            audioQ.flush();
+            // Cancelling an obsolete sentence is not the same as the user
+            // pressing Stop. A replacement turn must be allowed to speak.
+            audioQ.muted = m.latch === true;
+          }
+          else if (m.type === "mode") { mode = m.mode; applyMode(); }
+        };
+        socket.onopen = () => {
+          reconnectAttempt = 0;
+          input.disabled = false; sendBtn.disabled = false; micBtn.disabled = false; stopBtn.disabled = false; applyMode(); input.focus();
+        };
+        socket.onclose = () => {
+          if (redirecting || fatal || socketGeneration !== demoSocketGeneration) return;
+          const wait = Math.min(1000 * 2 ** reconnectAttempt++, 5000);
+          setStatus("Reconnecting to the live session…");
+          setTimeout(() => connectDemoSocket(entrySocket, 0), wait);
+        };
+        }
+        connectDemoSocket(entrySocket);
+      }
+
+      document.getElementById("modeText").onclick = () => setMode("text");
+      document.getElementById("modeVoice").onclick = () => {
+        /*
+         * Chrome may allow the microphone after its permission prompt while
+         * still refusing audible playback until a real page gesture.  The old
+         * handler returned immediately when Voice was already selected, so a
+         * user with text-only replies had no way to unlock or retry audio.
+         * Always make an explicit Voice click a playback-resume gesture.
+         */
+        const wasVoice = mode === "voice";
+        if (!wasVoice) setMode("voice");
+        audioQ.resumeFromGesture();
+        // setMode("voice") already starts the mic through applyMode. Only
+        // retry it here when Voice was already selected but listening is down.
+        if (wasVoice && !recording) startMic().catch((e) => {
+          bubble("Voice unavailable: " + e.message + " — is the voice server running on :8089?", "aidan");
+          stopMic();
+        });
+      };
+
+      // ---- Product switching + onboarding ----
+      document.getElementById("productPick").onchange = (e) => start(e.target.value);
+
+      const modal = document.getElementById("modal");
+      const oLog = document.getElementById("onboardLog");
+      document.getElementById("addProduct").onclick = () => { oLog.textContent = ""; modal.classList.add("open"); };
+      document.getElementById("pCancel").onclick = () => modal.classList.remove("open");
+
+      document.getElementById("pGo").onclick = async () => {
+        const body = {
+          name: document.getElementById("pName").value.trim(),
+          startUrl: document.getElementById("pUrl").value.trim(),
+          username: document.getElementById("pUser").value.trim() || undefined,
+          password: document.getElementById("pPass").value || undefined,
+          allowActions: document.getElementById("pAllow").value.split(",").map(s => s.trim()).filter(Boolean),
+        };
+        if (!body.name || !body.startUrl) { oLog.textContent = "Name and start URL are required."; return; }
+        if (durableCatalogMode) {
+          try {
+            oLog.textContent = "Creating the durable product workspace…";
+            const createdRes = await fetch("/api/v2/products", {
+              method: "POST", headers: { "content-type": "application/json" },
+              body: JSON.stringify({
+                key: body.name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") + "-" + Date.now().toString(36),
+                name: body.name, startUrl: body.startUrl,
+              }),
+            });
+            const created = await createdRes.json();
+            if (!createdRes.ok) throw new Error(created.error || "could not create product");
+            const id = created.product.id;
+            const environmentId = created.environments[0].id;
+            const roleProfileId = created.roles[0].id;
+
+            if (body.username || body.password) {
+              oLog.textContent += "\nStoring the login in the configured secret vault…";
+              const credentialRes = await fetch("/api/v2/credentials", {
+                method: "POST", headers: { "content-type": "application/json" },
+                body: JSON.stringify({ roleProfileId, username: body.username, password: body.password }),
+              });
+              const credential = await credentialRes.json();
+              if (!credentialRes.ok) throw new Error(credential.error || "could not store credentials securely");
+            }
+
+            const documents = [];
+            const pasted = document.getElementById("pDocs").value.trim();
+            if (pasted) documents.push({ title: "Product notes", content: pasted, uri: `manual://${id}/product-notes` });
+            for (const f of document.getElementById("pFiles").files || []) {
+              documents.push({ title: f.name, content: await f.text(), uri: `upload://${id}/${encodeURIComponent(f.name)}` });
+            }
+            for (const document of documents) {
+              const knowledgeRes = await fetch(`/api/v2/products/${id}/knowledge`, {
+                method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(document),
+              });
+              if (!knowledgeRes.ok) throw new Error((await knowledgeRes.json()).error || "knowledge upload failed");
+            }
+            const sources = document.getElementById("pSources").value.split("\n").map(s => s.trim()).filter(Boolean);
+            if (sources.length) {
+              oLog.textContent += "\nReading external product knowledge…";
+              const syncRes = await fetch(`/api/v2/products/${id}/knowledge/sync`, {
+                method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ urls: sources }),
+              });
+              if (!syncRes.ok) throw new Error((await syncRes.json()).error || "knowledge sync failed");
+            }
+
+            oLog.textContent += "\nMapping and replay-verifying product journeys…";
+            const jobRes = await fetch(`/api/v2/products/${id}/mapping-jobs`, {
+              method: "POST", headers: { "content-type": "application/json" },
+              body: JSON.stringify({ environmentId, roleProfileId }),
+            });
+            const queued = await jobRes.json();
+            if (!jobRes.ok) throw new Error(queued.error || "mapping could not start");
+            for (;;) {
+              await new Promise(resolve => setTimeout(resolve, 3000));
+              const state = await (await fetch(`/api/v2/mapping-jobs/${queued.job.id}`)).json();
+              oLog.textContent = `Mapping ${body.name}…\nStage: ${state.job.stage}\nAttempt: ${state.job.attempts}`;
+              if (state.job.status === "completed") break;
+              if (state.job.status === "failed") throw new Error(state.job.lastError || "mapping failed");
+            }
+            const publishedRes = await fetch(`/api/v2/catalogs/${queued.catalog.id}/publish`, { method: "POST" });
+            const published = await publishedRes.json();
+            if (!publishedRes.ok) throw new Error(published.error || "catalog review failed");
+            durableRoles.set(id, roleProfileId);
+            await loadProducts(id);
+            modal.classList.remove("open");
+            await start(id);
+          } catch (error) {
+            oLog.textContent += "\n\nCould not finish: " + error.message;
+          }
+          return;
+        }
+        oLog.textContent = "Checking the product is reachable and we can get past any login…";
+        const res = await fetch("/api/products", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) });
+        const out = await res.json();
+        if (!res.ok) { oLog.textContent = "Failed: " + (out.error || res.statusText); return; }
+        oLog.textContent = (out.preflight.ok ? "✓ " : "✗ ") + out.preflight.message;
+        await loadProducts();
+        if (!out.preflight.ok) return; // don't map a login page
+        const id = out.product.id;
+
+        // Attach knowledge BEFORE mapping — the planner uses docs to propose
+        // better jobs, so uploading first produces a better catalogue.
+        const files = [];
+        const pasted = document.getElementById("pDocs").value.trim();
+        if (pasted) files.push({ name: "pasted-notes", text: pasted });
+        for (const f of document.getElementById("pFiles").files || []) {
+          files.push({ name: f.name, text: await f.text() });
+        }
+        const sources = document.getElementById("pSources").value.split("\n").map(s => s.trim()).filter(Boolean);
+        if (files.length || sources.length) {
+          oLog.textContent += "\n\nAdding knowledge…";
+          const d = await (await fetch(`/api/products/${id}/docs`, {
+            method: "POST", headers: { "content-type": "application/json" },
+            body: JSON.stringify({ files, sources }),
+          })).json();
+          oLog.textContent += ` ${d.docChunks ?? 0} chunk(s) indexed.`;
+        }
+
+        // Mapping runs in the background; poll so the operator can watch it.
+        oLog.textContent += "\n\nMapping journeys (this takes a few minutes)…";
+        const poll = setInterval(async () => {
+          const st = await (await fetch("/api/products/" + id)).json();
+          const lines = (st.job && st.job.lines || []).slice(-6).join("\n");
+          oLog.textContent = (out.preflight.ok ? "✓ " : "✗ ") + out.preflight.message + "\n\n" + lines;
+          if (!(st.job && st.job.running)) {
+            clearInterval(poll);
+            oLog.textContent += `\n\n${st.onboarding && st.onboarding.status === "ready" ? "✓ Ready" : "Finished"} — ${st.onboarding && st.onboarding.message || ""}`;
+            await loadProducts(id);
+            if (st.onboarding && st.onboarding.status === "ready") { modal.classList.remove("open"); start(id); }
+          }
+        }, 4000);
+      };
+
+      /**
+       * Audio queue — plays Tia's voice in order, and can be FLUSHED instantly.
+       * Barge-in has to cut sound in <100ms, and only the client can do that:
+       * the server cannot un-send audio it has already written to the socket.
+       */
+      const audioQ = {
+        items: [], playing: false, el: null, gen: 0, next: null, waitTimer: null, playbackBlocked: false,
+        push(item) { if (item.gen === undefined) item.gen = this.gen; this.items.push(item); this.pump(); },
+        resumeFromGesture() {
+          this.muted = false;
+          this.playbackBlocked = false;
+          this.pump();
+        },
+        async pump() {
+          if (this.playing || this.playbackBlocked || this.muted) return;
+          clearTimeout(this.waitTimer);
+          // Play strictly in seq order. Cached lines arrive instantly while live
+          // ones take seconds, so arrival order != speaking order — sort, and if
+          // the next seq hasn't landed yet, wait briefly rather than skipping ahead.
+          this.items.sort((a, b) => a.seq - b.seq);
+          const head = this.items[0];
+          if (!head) { if (ws && ws.readyState === 1) ws.send(JSON.stringify({ type: "audio_ended" })); return; }
+          // After an interruption the server's sequence continues, but every
+          // earlier clip was intentionally discarded. Adopt the first new
+          // sequence immediately instead of waiting six seconds for a gap that
+          // can never be filled.
+          if (this.next === null) this.next = head.seq;
+          if (head.seq > this.next) {
+            this.waitTimer = setTimeout(() => { this.next = head.seq; this.pump(); }, 6000);
+            return; // a gap: hold for the missing line, but never wedge forever
+          }
+          const item = this.items.shift();
+          this.next = Math.max(this.next, item.seq + 1);
+          if (item.gen !== this.gen) return this.pump(); // stale: interrupted
+          this.playing = true;
+          try {
+            const el = new Audio("data:" + item.mime + ";base64," + item.b64);
+            this.el = el;
+            /*
+             * A WATCHDOG on playback, because `playing` was a latch with no way out.
+             *
+             * The queue only advances when `onended` (or `onerror`) fires. If a clip
+             * never fires either — a decode that stalls, a media element the browser
+             * quietly abandons, a tab throttled in the background — `playing` stays
+             * true forever. pump() then returns immediately every time, so every
+             * later clip sits in the queue unplayed: the transcript keeps scrolling
+             * and the voice is simply gone for the rest of the session. That is the
+             * "it stops speaking after a while but still shows text" failure.
+             *
+             * So: whichever comes first, the real end or the deadline, wins — and
+             * the queue keeps moving either way.
+             */
+            let settled = false;
+            const finish = () => {
+              if (settled) return;              // real end and watchdog can race
+              settled = true;
+              clearTimeout(watchdog);
+              // Tell the server this chunk was HEARD, so a walkthrough can pace
+              // its next click to the end of the sentence describing it.
+              if (ws && ws.readyState === 1) ws.send(JSON.stringify({ type: "audio_played", seq: item.seq }));
+              this.el = null;
+              // Breathe. Sentences butting together is the clearest "this is a
+              // machine" tell; a question gets a longer gap because a person waits.
+              const gap = Math.max(0, item.gapMs || 0);
+              setTimeout(() => { this.playing = false; this.pump(); }, gap);
+            };
+            // Generous: only fires when playback is genuinely wedged, never on a
+            // clip that is merely long. Duration is unknown until metadata loads,
+            // so start with a ceiling and tighten once we know.
+            let watchdog = setTimeout(finish, 30000);
+            el.onloadedmetadata = () => {
+              if (settled || !isFinite(el.duration)) return;
+              clearTimeout(watchdog);
+              watchdog = setTimeout(finish, el.duration * 1000 + 3000);
+            };
+            el.onended = el.onerror = finish;
+            await el.play().then(() => {
+              this.playbackBlocked = false;
+              send({ type: "client_audio_started", seq: item.seq });
+            }).catch((error) => {
+              clearTimeout(watchdog);
+              settled = true;
+              this.playing = false;
+              this.el = null;
+              const detail = String(error && (error.name || error.message || error));
+              if (/NotAllowedError|not allowed|user gesture|interact/i.test(detail)) {
+                // Do not throw the reply away. Keep it at the head of the queue
+                // and retry synchronously from the next Voice-button gesture.
+                this.items.unshift(item);
+                this.next = this.next === null ? item.seq : Math.min(this.next, item.seq);
+                this.playbackBlocked = true;
+                setStatus("Sound is blocked — tap Voice once to enable it.");
+                send({ type: "client_audio_error", reason: "autoplay_blocked", seq: item.seq });
+                return;
+              }
+              console.warn("Tia audio playback failed", detail);
+              send({ type: "client_audio_error", reason: "playback_failed", detail: detail.slice(0, 160), seq: item.seq });
+              this.pump();
+            });
+          } catch (e) { this.playing = false; this.pump(); }
+        },
+        /** Stop now and discard everything queued (barge-in). */
+        /* Dropped-on-arrival until the next turn. Flushing once is not enough:
+           audio already synthesised on the server keeps arriving after a stop,
+           and the queue happily plays it — which is why Tia carried on
+           murmuring after voice was switched off. */
+        muted: false,
+        flush() {
+          this.gen++; this.items.length = 0; this.next = null; this.playbackBlocked = false; clearTimeout(this.waitTimer);
+          if (this.el) { try { this.el.pause(); this.el.currentTime = 0; } catch (e) {} this.el = null; }
+          this.playing = false;
+        },
+      };
+
+      // ---- Voice input: speech → text → Tia chat, and Tia speaks back ----
+      const micBtn = document.getElementById("mic");
+      const stopBtn = document.getElementById("stop");
+
+      /** Silence everything, immediately and locally — then tell the server. */
+      function stopEverything() {
+        /*
+         * LATCH the queue off, do not merely empty it.
+         *
+         * Flushing alone cleared what was buffered and then accepted everything
+         * that arrived a moment later, so Tia carried on talking after Stop was
+         * pressed. Streaming made it worse, not better: sentences now arrive over
+         * several seconds, so there is a long window of in-flight audio after the
+         * click. The server also mutes itself on "stop", but that round trip is
+         * exactly the race — muting locally stops sound in the same tick, and the
+         * latch lifts on the next thing the user says.
+         */
+        try { audioQ.flush(); audioQ.muted = true; } catch (e) {}
+        send({ type: "stop" });
+        setStatus("");
+        stopBtn.classList.remove("hot");
+      }
+      stopBtn.onclick = stopEverything;
+      // Esc is what people actually reach for.
+      document.addEventListener("keydown", (e) => { if (e.key === "Escape") stopEverything(); });
+      let voiceWs = null, audioCtx = null, micStream = null, procNode = null, recording = false;
+      /*
+       * Local voice-activity thresholds. Tunable by ear — raise VAD_SPEAKING if
+       * Tia interrupts itself, lower it if it ignores you while talking.
+       */
+      /* Mic audio held back while Tia talks, so the beginning of an
+         interruption is not lost. Frames are 4096 samples @16kHz = 256ms each,
+         so 10 frames is ~2.5s — comfortably longer than anyone's opening clause,
+         and ~160KB of memory. Measured: at 5 frames "Actually show me how to
+         create a new service instead" came back as "to create a new service
+         instead"; the buffer has to outlast the muted window, not merely soften it. */
+      const preroll = [];
+      const PREROLL_FRAMES = 10;
+      const VAD_IDLE = 0.02;      // user speech when nothing is playing
+      const VAD_SPEAKING = 0.12;  // own-speaker bleed crossed 0.08 and cut Tia off
+      const VAD_FRAMES = 2;       // consecutive frames (~0.5s of 4096@16k) before acting
+      const VAD_FRAMES_SPEAKING = 5;   // demand >1s of sustained speech to cut Tia off
+      /*
+       * Ignore the microphone for a moment after playback starts.
+       *
+       * On speakers (not headphones) the mic hears Tia, echo cancellation only
+       * removes most of it, and the loudest leakage is right at the start of a
+       * phrase — exactly when a real person is least likely to be interrupting.
+       * Without this the agent cut itself off within the first chunk and appeared
+       * to have no voice at all.
+       */
+      const VAD_GRACE_MS = 900;
+      let playbackStartedAt = 0;
+      let vadRun = 0;
+
+      function floatTo16kPCM(f32, inRate) {
+        const outRate = 16000, ratio = inRate / outRate, outLen = Math.floor(f32.length / ratio);
+        const out = new Int16Array(outLen);
+        for (let i = 0; i < outLen; i++) {
+          const idx = i * ratio, i0 = Math.floor(idx), i1 = Math.min(i0 + 1, f32.length - 1), frac = idx - i0;
+          let s = f32[i0] * (1 - frac) + f32[i1] * frac;
+          s = Math.max(-1, Math.min(1, s));
+          out[i] = s < 0 ? s * 0x8000 : s * 0x7fff;
+        }
+        return out;
+      }
+
+      /*
+       * The voice socket outlives any single turn, and it MUST be able to die and
+       * come back.
+       *
+       * Before this, the socket was opened once inside startMic and never watched
+       * again: there was no onclose, and the onerror handler only existed inside
+       * the open promise, so it was dead weight once that promise settled. If the
+       * socket closed for any reason after the first exchange — a server-side
+       * exception, a dropped connection, a proxy timeout — the audio path below
+       * kept checking `readyState === 1`, quietly discarded every microphone
+       * frame from then on, and left the button reading "● Live". The demo
+       * answered exactly one question and then went deaf in silence.
+       *
+       * So: reconnect with backoff for as long as we are meant to be listening,
+       * and say so in the status line instead of failing invisibly.
+       */
+      let voiceRetry = 0;
+      let voiceReconnectTimer = null;
+      let pendingVoiceFinal = "";
+      let pendingVoiceTiming = null;
+      let voiceCommitTimer = null;
+
+      /*
+       * Streaming recognisers can mark a thinking pause as final. Submitting each
+       * final immediately turned one sentence into several user turns; every
+       * fragment then cancelled the answer to the fragment before it. Keep a
+       * short join window, and use a longer one only when the words themselves
+       * clearly end mid-thought ("what are", "explain in", "how to", etc.).
+       */
+      function voiceLooksIncomplete(text) {
+        const t = text.trim().toLowerCase().replace(/[,.!?]+$/, "");
+        return /\b(what|which|why|where|when|who|how|are|is|the|a|an|to|in|on|for|with|and|or|can|could|would|should|tell me|explain|show me|let|let's)$/.test(t);
+      }
+
+      function mergeVoiceFinal(previous, next) {
+        const a = previous.trim(), b = next.trim();
+        if (!a) return b;
+        if (!b || a.toLowerCase() === b.toLowerCase()) return a;
+        // Providers sometimes resend the full accumulated hypothesis.
+        if (b.toLowerCase().startsWith(a.toLowerCase())) return b;
+        if (a.toLowerCase().endsWith(b.toLowerCase())) return a;
+        return `${a} ${b}`.replace(/\s+/g, " ").trim();
+      }
+
+      function queueVoiceFinal(text, timing) {
+        pendingVoiceFinal = mergeVoiceFinal(pendingVoiceFinal, text);
+        pendingVoiceTiming = timing || pendingVoiceTiming;
+        input.value = pendingVoiceFinal;
+        clearTimeout(voiceCommitTimer);
+        const delay = voiceLooksIncomplete(pendingVoiceFinal) ? 2200 : 850;
+        voiceCommitTimer = setTimeout(() => {
+          if (!pendingVoiceFinal) return;
+          input.value = pendingVoiceFinal;
+          const finalTiming = pendingVoiceTiming;
+          pendingVoiceFinal = "";
+          pendingVoiceTiming = null;
+          submit(true, finalTiming);
+        }, delay);
+      }
+
+      function scheduleVoiceReconnect() {
+        if (!recording || mode !== "voice") return;      // deliberately stopped
+        if (voiceReconnectTimer) return;                  // one in flight already
+        const wait = Math.min(300 * 2 ** voiceRetry, 5000);
+        voiceRetry++;
+        setStatus("Reconnecting…");
+        voiceReconnectTimer = setTimeout(async () => {
+          voiceReconnectTimer = null;
+          try {
+            await openVoiceSocket();
+            voiceRetry = 0;
+            setStatus("Listening…");
+          } catch (e) {
+            scheduleVoiceReconnect();
+          }
+        }, wait);
+      }
+
+      function openVoiceSocket() {
+        return new Promise((resolve, reject) => {
+          const sock = new WebSocket("ws://" + location.hostname + ":8089");
+          voiceWs = sock;
+          sock.binaryType = "arraybuffer";
+          sock.onmessage = (ev) => wireVoiceMessage(ev);
+          sock.onclose = () => { if (voiceWs === sock) scheduleVoiceReconnect(); };
+          sock.onerror = () => { /* onclose always follows; recovery lives there */ };
+          sock.onopen = () => {
+            // Re-announce the product vocabulary: a new socket is a new decoder
+            // session and knows nothing about the previous one.
+            if (window.__speechHints) {
+              try { sock.send(JSON.stringify({ type: "vocabulary", terms: window.__speechHints })); } catch (e) {}
+            }
+            resolve();
+          };
+          setTimeout(() => { if (sock.readyState !== 1) reject(new Error("voice server not reachable")); }, 5000);
+        });
+      }
+
+      function wireVoiceMessage(ev) {
+          const m = JSON.parse(ev.data);
+          if (m.type === "speech_start") {
+            /*
+             * Earliest possible barge-in signal — but it must obey the SAME echo
+             * guard as the local VAD, which it did not.
+             *
+             * This path flushed audio unconditionally. The server's speech_start
+             * comes from a plain energy VAD listening to a mic that is picking up
+             * Tia's own speaker output, so every time Tia began talking the
+             * mic heard him, the server called it speech, and this line killed
+             * the audio mid-word. Tia could never finish a sentence. The
+             * careful thresholds below (stricter level, more frames, settling
+             * time) were all bypassed by this one call.
+             *
+             * Now it defers to the same rule: while we are playing, only the
+             * local VAD — which knows how loud it is and applies the echo
+             * threshold — may interrupt.
+             */
+            const playing = audioQ.playing || audioQ.items.length > 0;
+            if (!playing) {
+              if (ws && ws.readyState === 1) ws.send(JSON.stringify({ type: "user_speaking" }));
+            }
+          }
+          else if (m.type === "partial") input.value = mergeVoiceFinal(pendingVoiceFinal, m.text);
+          else if (m.type === "transcript" && m.is_final) queueVoiceFinal(m.text, m.timing);
+          else if (m.type === "error") {
+            /*
+             * A speech-to-text error used to call stopMic(), which tore down the
+             * microphone for good. One transient hiccup on the server therefore
+             * ended voice for the whole session — the user saw a single line of
+             * text and was never listened to again. Report it and let the socket
+             * lifecycle reconnect; only a deliberate stop should end listening.
+             */
+            bubble(m.text, "aidan");
+          }
+      }
+
+      async function startMic() {
+        await openVoiceSocket();
+        micStream = await navigator.mediaDevices.getUserMedia({ audio: { channelCount: 1, echoCancellation: true, noiseSuppression: true, autoGainControl: false } });
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 16000 });
+        const src = audioCtx.createMediaStreamSource(micStream);
+        procNode = audioCtx.createScriptProcessor(4096, 1, 1);
+        procNode.onaudioprocess = (e) => {
+          if (!recording) return;
+          const buf = e.inputBuffer.getChannelData(0);
+
+          /*
+           * LOCAL barge-in. Waiting for the STT service to report speech was the
+           * reason it "stopped listening once it started speaking": that path
+           * needs a network round-trip AND only fired once per utterance, so after
+           * one trigger it was dead. The browser already has the microphone
+           * samples, so decide here — it costs nothing and reacts instantly.
+           */
+          let sum = 0;
+          for (let i = 0; i < buf.length; i++) sum += buf[i] * buf[i];
+          const rms = Math.sqrt(sum / buf.length);
+
+          // A higher bar while we're playing audio: browser echo-cancellation
+          // removes most of Tia's own voice, but not all of it.
+          const speakingNow = audioQ.playing || audioQ.items.length > 0;
+          if (speakingNow && !playbackStartedAt) playbackStartedAt = Date.now();
+          if (!speakingNow) playbackStartedAt = 0;
+          const threshold = speakingNow ? VAD_SPEAKING : VAD_IDLE;
+          if (rms > threshold) vadRun++; else vadRun = Math.max(0, vadRun - 1);
+
+          const settled = !speakingNow || Date.now() - playbackStartedAt > VAD_GRACE_MS;
+          const needed = speakingNow ? VAD_FRAMES_SPEAKING : VAD_FRAMES;
+          if (speakingNow && settled && vadRun >= needed) {
+            vadRun = 0;
+            audioQ.flush();                                    // stop instantly, locally
+            if (ws && ws.readyState === 1) ws.send(JSON.stringify({ type: "user_speaking" }));
+          }
+
+          /*
+           * Do not feed the mic to the STT while Tia is speaking.
+           *
+           * The mic hears Tia through the speakers, so the STT happily
+           * transcribes his own words — and the client submits any final
+           * transcript as a USER MESSAGE. That is a feedback loop: Tia talks,
+           * hears himself, answers himself. (The upstream project this was
+           * trimmed from had echo/mic-bleed suppression; it was removed on the
+           * way in and this is the hole it left.)
+           *
+           * Barge-in is unaffected: the local VAD above still runs on every
+           * frame, and the moment it decides you are really talking it flushes
+           * playback — which clears `speakingNow`, so the mic reconnects to the
+           * STT and your words are captured from that point.
+           */
+          /*
+           * PRE-ROLL. While Tia speaks the mic is not streamed to the STT (his
+           * voice would otherwise be transcribed as yours), but the first words
+           * of an interruption happen DURING that window — so muting alone threw
+           * away the start of every barge-in. The tail that survived was often a
+           * word or two and got rejected as "too short", which reads as the
+           * product ignoring you.
+           *
+           * So keep the last second of microphone audio while muted, and send it
+           * ahead of the live stream the moment playback stops. The interruption
+           * arrives whole.
+           */
+          if (voiceWs && voiceWs.readyState === 1) {
+            const frame = floatTo16kPCM(buf, audioCtx.sampleRate);
+            if (speakingNow) {
+              preroll.push(frame);
+              while (preroll.length > PREROLL_FRAMES) preroll.shift();
+            } else {
+              if (preroll.length) {
+                for (const f of preroll) voiceWs.send(f.buffer);
+                preroll.length = 0;
+              }
+              voiceWs.send(frame.buffer);
+            }
+          }
+        };
+        src.connect(procNode); procNode.connect(audioCtx.destination);
+        recording = true; vadRun = 0; micBtn.classList.add("recording"); micBtn.textContent = "● Live"; setStatus("Listening…");
+      }
+
+      function stopMic() {
+        recording = false;
+        clearTimeout(voiceCommitTimer); voiceCommitTimer = null; pendingVoiceFinal = ""; pendingVoiceTiming = null;
+        // Cancel any pending reconnect: a deliberate stop must stay stopped.
+        clearTimeout(voiceReconnectTimer); voiceReconnectTimer = null; voiceRetry = 0; micBtn.classList.remove("recording"); micBtn.textContent = "🎤"; setStatus("");
+        try { if (voiceWs && voiceWs.readyState === 1) voiceWs.send(JSON.stringify({ type: "flush" })); } catch (e) {}
+        if (procNode) { procNode.disconnect(); procNode.onaudioprocess = null; }
+        if (audioCtx) audioCtx.close();
+        if (micStream) micStream.getTracks().forEach((t) => t.stop());
+        if (voiceWs) { try { voiceWs.close(); } catch (e) {} }
+        voiceWs = null; audioCtx = null; micStream = null; procNode = null;
+      }
+
+      micBtn.onclick = async () => {
+        if (recording) return stopMic();
+        try { await startMic(); }
+        catch (e) { bubble("Voice unavailable: " + e.message + " — is the voice server running on :8089?", "aidan"); stopMic(); }
+      };
+
+      // ---- Tier 0 sensing (free): detect struggle signals in the prospect's own behaviour ----
+      // Costs nothing — pure DOM events. The server only spends a vision call when one fires.
+      let clickTimes = [], lastPos = null, hoverTimer = null, idleTimer = null, lastActivity = 0;
+
+      function signal(kind, x, y) { send({ type: "signal", kind, x, y }); }
+
+      function armIdle(x, y) {
+        clearTimeout(idleTimer);
+        idleTimer = setTimeout(() => {
+          if (lastActivity && Date.now() - lastActivity >= 11000) signal("idle_after_activity", x, y);
+        }, 12000);
+      }
+
+      screen.addEventListener("mousemove", (e) => {
+        const r = screen.getBoundingClientRect();
+        const x = (e.clientX - r.left) / r.width, y = (e.clientY - r.top) / r.height;
+        lastActivity = Date.now();
+        // hesitation = cursor parked on one spot without acting
+        if (!lastPos || Math.hypot(x - lastPos.x, y - lastPos.y) > 0.02) {
+          lastPos = { x, y };
+          clearTimeout(hoverTimer);
+          hoverTimer = setTimeout(() => signal("hesitation", x, y), 4000);
+        }
+        armIdle(x, y);
+      });
+
+      // ---- Takeover: forward the prospect's own clicks / scroll / keys ----
+      screen.addEventListener("click", (e) => {
+        const r = screen.getBoundingClientRect();
+        const x = (e.clientX - r.left) / r.width, y = (e.clientY - r.top) / r.height;
+        send({ type: "click", x, y });
+        lastActivity = Date.now();
+        clearTimeout(hoverTimer);
+        armIdle(x, y);
+        // rage click = 3+ clicks in the same small area within 1.2s
+        const now = Date.now();
+        clickTimes = clickTimes.filter((c) => now - c.t < 1200 && Math.hypot(x - c.x, y - c.y) < 0.04);
+        clickTimes.push({ t: now, x, y });
+        if (clickTimes.length >= 3) { signal("rage_click", x, y); clickTimes = []; }
+      });
+      document.getElementById("view").addEventListener("wheel", (e) => { send({ type: "wheel", dy: e.deltaY }); }, { passive: true });
+      window.addEventListener("keydown", (e) => {
+        if (document.activeElement === input) return;
+        const printable = e.key.length === 1;
+        send({ type: "key", key: e.key, text: printable ? e.key : "" });
+      });
+
+      function send(obj) { if (ws && ws.readyState === 1) ws.send(JSON.stringify(obj)); }
+      function submit(viaVoice, voiceTiming) {
+        const text = input.value.trim(); if (!text) return;
+        // A new turn lifts the post-stop mute — otherwise one interruption would
+        // silence Tia permanently.
+        if (mode === "voice") audioQ.muted = false;
+        // Typed input is unquestionably the user and can render immediately.
+        // Voice waits for the server's user_accepted acknowledgement; otherwise
+        // rejected Tia echo/noise appears in the transcript under "You".
+        const clientMessageId = (globalThis.crypto && crypto.randomUUID) ? crypto.randomUUID() : `${Date.now()}-${Math.random()}`;
+        if (!viaVoice) bubble(text, "me");
+        else {
+          const entry = { text, displayed: false, fallback: null, cleanup: null };
+          // Backward-compatible during a rolling worker restart. Current workers
+          // acknowledge immediately; an older worker has no acknowledgement, so
+          // the real user must still appear rather than vanish from the transcript.
+          entry.fallback = setTimeout(() => {
+            if (!entry.displayed) { entry.displayed = true; bubble(text, "me"); }
+          }, 800);
+          entry.cleanup = setTimeout(() => pendingVoiceBubbles.delete(clientMessageId), 10_000);
+          pendingVoiceBubbles.set(clientMessageId, entry);
+        }
+        // viaVoice lets the server apply echo suppression only to mic input.
+        send({ type: "user_message", clientMessageId, text, viaVoice: !!viaVoice, ...(voiceTiming ? { voiceTiming } : {}) });
+        input.value = "";
+      }
+      sendBtn.onclick = () => submit(false);
+      input.addEventListener("keydown", (e) => { if (e.key === "Enter") submit(false); });
+      loadProducts()
+        .then((p) => start(p))
+        .catch((e) => { ph.textContent = "Failed to start: " + e.message; });
+    </script>
+  </body>
+</html>

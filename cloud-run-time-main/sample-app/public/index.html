@@ -1,0 +1,13 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width"><title>Sable Sample Product</title>
+<style>body{font:16px system-ui;margin:0;background:#f5f7fb;color:#172033}nav{padding:16px 32px;background:#172033;color:white}main{max-width:860px;margin:40px auto;padding:32px;background:white;border-radius:16px}button,input{font:inherit;padding:10px 14px;margin:6px}.card{padding:20px;border:1px solid #d7deea;border-radius:12px;margin:12px 0}.success{color:#16794a}</style></head>
+<body><nav>Sable controlled sample</nav><main>
+<section id="dashboard"><h1>Workspace health</h1><div class="card"><strong>Current status:</strong> Healthy</div><div class="card">Open tasks visible on this page: <strong>7</strong></div><div class="card" data-private>Private account reference: ACCT-99881</div><button data-testid="open-settings">Open settings</button></section>
+<section id="settings" hidden><h1>Profile settings</h1><label>Display name <input data-testid="display-name" value="Sample User"></label><button data-testid="save-profile">Save profile</button><button data-testid="archive-project">Archive project</button><p id="result" role="status"></p></section>
+</main><script src="/sable.min.js?v=voice-playback-3"></script><script src="/sable-ui.min.js?v=voice-playback-3"></script><script>
+const dashboard=document.querySelector('#dashboard'),settings=document.querySelector('#settings'),result=document.querySelector('#result');
+document.querySelector('[data-testid=open-settings]').onclick=()=>{dashboard.hidden=true;settings.hidden=false;location.hash='settings'};
+document.querySelector('[data-testid=save-profile]').onclick=()=>{result.textContent='Profile saved';result.className='success'};
+document.querySelector('[data-testid=archive-project]').onclick=()=>{result.textContent='Project archived';result.className='success'};
+(async()=>{const cfg=await fetch('/runtime-config.generated.json').then(r=>r.json());const agent=await Sable.init({...cfg,voice:true,tokenProvider:async()=>{const r=await fetch('/api/sable-token');if(!r.ok)throw Error('Token failed');return (await r.json()).identityToken}});SableUI.mountSableUi(agent,{initiallyOpen:true,greeting:'Ask me about this product, this page, or tell me to open settings.'})})().catch(e=>console.error(e));
+</script></body></html>

@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Aidan — Sign in</title>
+  <style>
+    :root { color-scheme: dark; }
+    * { box-sizing: border-box; }
+    body { margin:0; min-height:100vh; display:flex; align-items:center; justify-content:center;
+           background:#0b0e13; color:#dfe5ee;
+           font:14px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+    .card { width:100%; max-width:380px; background:#10141b; border:1px solid #232a35;
+            border-radius:14px; padding:28px; }
+    h1 { margin:0 0 4px; font-size:19px; }
+    p.h { margin:0 0 22px; color:#8a93a3; font-size:12.5px; line-height:1.6; }
+    label { display:block; font-size:12px; color:#9aa4b2; margin:14px 0 5px; }
+    input { width:100%; background:#0b0e13; border:1px solid #262e3a; color:#dfe5ee;
+            border-radius:9px; padding:10px 12px; font-size:14px; }
+    input:focus { outline:none; border-color:#3b82f6; }
+    button { width:100%; margin-top:20px; background:#2563eb; border:0; color:#fff; font-weight:600;
+             border-radius:9px; padding:11px; font-size:14px; cursor:pointer; }
+    button:hover { background:#1d4ed8; }
+    button:disabled { opacity:.6; cursor:default; }
+    .err { margin-top:14px; background:#2a1618; border:1px solid #5b2b30; color:#ffb4b4;
+           padding:9px 11px; border-radius:8px; font-size:12.5px; display:none; }
+    .hint { margin-top:18px; font-size:11.5px; color:#5e6675; line-height:1.6; }
+  </style>
+</head>
+<body>
+  <form class="card" id="f">
+    <h1>Aidan</h1>
+    <p class="h">Sign in to link products, map journeys and review what the platform has recorded.</p>
+
+    <label for="email">Email</label>
+    <input id="email" type="email" autocomplete="username" required autofocus />
+
+    <label for="password">Password</label>
+    <input id="password" type="password" autocomplete="current-password" required />
+
+    <button id="go" type="submit">Sign in</button>
+    <div class="err" id="err"></div>
+
+    <p class="hint">On a fresh install the owner account and its one-time password are printed in the
+      server console. Set <code>ADMIN_EMAIL</code> and <code>ADMIN_PASSWORD</code> to choose your own.</p>
+  </form>
+
+  <script>
+    const f = document.getElementById("f");
+    const err = document.getElementById("err");
+    const go = document.getElementById("go");
+
+    f.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      err.style.display = "none";
+      go.disabled = true;
+      go.textContent = "Signing in…";
+      try {
+        const res = await fetch("/api/auth/login", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({
+            email: document.getElementById("email").value,
+            password: document.getElementById("password").value,
+          }),
+        });
+        const body = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(body.error || `sign-in failed (${res.status})`);
+        // Only ever follow a same-origin path, so a crafted ?next= cannot bounce
+        // a freshly authenticated user to another site.
+        const next = new URLSearchParams(location.search).get("next") || "/admin.html";
+        location.href = next.startsWith("/") && !next.startsWith("//") ? next : "/admin.html";
+      } catch (e2) {
+        err.textContent = e2.message;
+        err.style.display = "block";
+        go.disabled = false;
+        go.textContent = "Sign in";
+      }
+    });
+  </script>
+</body>
+</html>

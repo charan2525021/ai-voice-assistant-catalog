@@ -1,0 +1,99 @@
+name: CI
+
+# The eval suite existed but gated nothing — 25/25 was only ever checked by hand,
+# so a regression could land unnoticed. This makes it a merge blocker.
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    services:
+      postgres:
+        image: pgvector/pgvector:pg16
+        env:
+          POSTGRES_USER: aidan
+          POSTGRES_PASSWORD: aidan
+          POSTGRES_DB: aidan
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U aidan"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 3s
+          --health-retries 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: package-lock.json
+
+      - run: npm ci
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Build immutable Web SDK artifacts
+        run: npm run build:sdk
+
+      # Playwright's browser is needed by anything that drives a page.
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Unit / safety tests
+        run: npm test --if-present
+
+      # The only test that proves the exact built bytes drive a real page. The
+      # artifact and Chromium are both already present, so leaving it ungated
+      # would let a Gate 1 regression reach a client's browser unnoticed.
+      - name: Gate 1 exact-browser-artifact test
+        run: npm run test:sdk:browser
+
+      - name: Prepare durable database role and schema
+        env:
+          POSTGRES_CONTAINER: ${{ job.services.postgres.id }}
+          DATABASE_ADMIN_URL: postgres://aidan:aidan@127.0.0.1:5432/aidan
+        run: |
+          docker exec "$POSTGRES_CONTAINER" psql -U aidan -d aidan -v ON_ERROR_STOP=1 -c "CREATE ROLE aidan_runtime LOGIN PASSWORD 'aidan_runtime' NOSUPERUSER NOCREATEDB NOCREATEROLE NOINHERIT NOBYPASSRLS"
+          npm run db:migrate --workspace aidan-server
+
+      - name: Durable PostgreSQL and Redis integration tests
+        env:
+          DATABASE_URL: postgres://aidan_runtime:aidan_runtime@127.0.0.1:5432/aidan
+          REDIS_URL: redis://127.0.0.1:6379
+        run: npm run test:integration --workspace aidan-server
+
+      # Needs a model endpoint. Skipped on forks, where secrets are unavailable,
+      # rather than failing and training people to ignore a red build.
+      - name: Evals
+        if: ${{ github.event.pull_request.head.repo.full_name == github.repository || github.event_name == 'push' }}
+        env:
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+          LLM_BASE_URL: ${{ secrets.LLM_BASE_URL }}
+          # Never let a looping agent burn the CI budget.
+          BUDGET_DAILY_USD: "2"
+          BUDGET_TRACE_USD: "0.5"
+        run: npm run eval --workspace aidan-server
+
+      - name: Upload event log on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: aidan-events
+          path: data/events/
+          if-no-files-found: ignore

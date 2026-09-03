@@ -1,0 +1,6 @@
+-- Compatibility marker only.
+--
+-- The production schema is versioned in db/migrations/.
+-- Run it with `cd server && npm run db:migrate`, or start docker-compose on a
+-- fresh database. Keeping two executable schemas caused drift, so this file is
+-- intentionally not a second source of truth.

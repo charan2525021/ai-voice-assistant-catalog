@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width">
+  <title>Sable overlay UI fixture</title>
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; color: #172033; background: #f5f7fb; font: 16px/1.5 system-ui, sans-serif; }
+    nav { padding: 18px 32px; color: white; background: #172033; font-weight: 700; }
+    main { max-width: 960px; margin: 36px auto; padding: 32px; }
+    .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
+    .card { min-height: 150px; padding: 20px; border: 1px solid #d7deea; border-radius: 14px; background: white; }
+  </style>
+</head>
+<body>
+  <nav>Client product</nav>
+  <main>
+    <h1>Health overview</h1>
+    <p>This page verifies that the client product keeps its original layout while Sable overlays it.</p>
+    <div class="grid">
+      <div class="card"><strong>Reports</strong><p>Review recent reports.</p></div>
+      <div class="card"><strong>Risk scores</strong><p>Explore available calculators.</p></div>
+      <div class="card"><strong>Help</strong><p>Read common questions.</p></div>
+    </div>
+    <div aria-label="Transcript test controls">
+      <button id="user-partial">Emit user partial</button>
+      <button id="user-final">Emit user final</button>
+      <button id="assistant-partial">Emit assistant partial</button>
+      <button id="assistant-final">Emit assistant final</button>
+    </div>
+  </main>
+  <script src="../dist/sable-ui.min.js"></script>
+  <script>
+    const listeners = new Set();
+    const agent = {
+      snapshot: () => ({ state: "ready", voiceAvailable: true }),
+      getTranscript: () => [], clearContinuity() {},
+      subscribe(listener) { listeners.add(listener); listener({ type: "state", state: "ready", detail: "Ready" }); return () => listeners.delete(listener); },
+      sendMessage() {}, startVoice: async () => {}, stopVoice: async () => {}, cancelSpeech() {},
+      stop() {}, setApprovalHandler() {},
+    };
+    window.sableUiFixture = SableUI.mountSableUi(agent, {
+      initiallyOpen: true,
+      greeting: "Ask me about this product or request a walkthrough.",
+    });
+    window.emitSableFixtureEvent = (event) => listeners.forEach((listener) => listener(event));
+    document.querySelector("#user-partial").onclick = () => window.emitSableFixtureEvent({ type: "voice", state: "listening", sessionActive: true, text: "Show me the", final: false });
+    document.querySelector("#user-final").onclick = () => window.emitSableFixtureEvent({ type: "voice", state: "processing", sessionActive: true, text: "Show me the platform", final: true });
+    document.querySelector("#assistant-partial").onclick = () => window.emitSableFixtureEvent({ type: "assistant", turnId: "turn-fixture", text: "I’ll open the platform", partial: true });
+    document.querySelector("#assistant-final").onclick = () => window.emitSableFixtureEvent({ type: "assistant", turnId: "turn-fixture", text: "I’ll open the platform and explain it.", partial: false });
+  </script>
+</body>
+</html>

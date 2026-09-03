@@ -1,0 +1,35 @@
+services:
+  db:
+    image: pgvector/pgvector:pg16
+    environment:
+      POSTGRES_USER: aidan
+      POSTGRES_PASSWORD: aidan
+      POSTGRES_DB: aidan
+      AIDAN_RUNTIME_PASSWORD: ${AIDAN_RUNTIME_PASSWORD:-aidan_runtime}
+    ports:
+      - "${POSTGRES_PORT:-5433}:5432"
+    volumes:
+      - aidan-db-data:/var/lib/postgresql/data
+      - ./db/migrations:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U aidan"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    command: ["redis-server", "--appendonly", "yes"]
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    volumes:
+      - aidan-redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  aidan-db-data:
+  aidan-redis-data:

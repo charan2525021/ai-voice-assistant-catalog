@@ -1,0 +1,17 @@
+{
+  "apiBaseUrl": "http://localhost:8787",
+  "installationId": "niroggyan-brochure-poc-installation",
+  "origin": "https://www.brochure.niroggyan.com",
+  "catalogTrustKeys": [
+    {
+      "keyId": "niroggyan-brochure-67ca9a0599dc",
+      "algorithm": "ES256",
+      "jwk": {
+        "kty": "EC",
+        "x": "ZKN0HWgybrMj2eEuoFwxnpAq3aZKd-bs3M_VCfJTC2A",
+        "y": "dTEltMNgoOr7MY4QqjkoCOonflBabMFmHVNdtO7GUr8",
+        "crv": "P-256"
+      }
+    }
+  ]
+}

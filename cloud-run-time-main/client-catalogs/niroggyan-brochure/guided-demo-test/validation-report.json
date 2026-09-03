@@ -1,0 +1,137 @@
+{
+  "generatedAt": "2026-08-25T00:00:00.000Z",
+  "client": "niroggyan-brochure-guided-demo",
+  "catalogVersionId": "niroggyan-brochure-v2-test",
+  "digest": {
+    "algorithm": "SHA-256",
+    "encoding": "base64url",
+    "value": "nbqJaxr_DUzZXmGDLnQqnUsXhOrNs6uJTzuWsnacMPg"
+  },
+  "signature": {
+    "algorithm": "ES256",
+    "keyId": "niroggyan-brochure-a7ad506b991d"
+  },
+  "counts": {
+    "screens": 12,
+    "controls": 24,
+    "journeys": 16,
+    "approvedJourneys": 12,
+    "demoSafeJourneys": 8,
+    "demoModules": 8,
+    "salesPlays": 14,
+    "knowledgeChunks": 12
+  },
+  "checks": [
+    {
+      "name": "catalog schema valid",
+      "ok": true
+    },
+    {
+      "name": "signed envelope valid",
+      "ok": true
+    },
+    {
+      "name": "digest matches RFC 8785 canonical payload",
+      "ok": true
+    },
+    {
+      "name": "ES256 signature verifies with public key",
+      "ok": true
+    },
+    {
+      "name": "every journey control and screen reference exists",
+      "ok": true
+    },
+    {
+      "name": "every compatibility entry maps exactly to a real step",
+      "ok": true
+    },
+    {
+      "name": "every workflow input reference exists in its schema",
+      "ok": true
+    },
+    {
+      "name": "approved journeys use only SDK_DIRECT steps or declared client tools",
+      "ok": true
+    },
+    {
+      "name": "approved postconditions are present and can fail independently",
+      "ok": true
+    },
+    {
+      "name": "broken items are not approved executable journeys",
+      "ok": true
+    },
+    {
+      "name": "privacy policy disables screenshots and element values",
+      "ok": true
+    },
+    {
+      "name": "Google Translate DOM has a site-specific exclusion",
+      "ok": true
+    },
+    {
+      "name": "runtime DB stores only credential hash",
+      "ok": true
+    },
+    {
+      "name": "public JWK contains no private key material",
+      "ok": true
+    },
+    {
+      "name": "guided-demo installation is explicitly enabled",
+      "ok": true
+    },
+    {
+      "name": "guided-demo profile contains exactly two generic intake questions",
+      "ok": true
+    },
+    {
+      "name": "every configured module maps to an approved demo-safe journey",
+      "ok": true
+    },
+    {
+      "name": "only the reviewed stable-state journey set is demo-safe",
+      "ok": true
+    },
+    {
+      "name": "external and ambiguous journeys remain outside guided playback",
+      "ok": true
+    },
+    {
+      "name": "signed catalog contains bounded sales-call grounding",
+      "ok": true
+    },
+    {
+      "name": "recording manifest never invents an unverified audio reference",
+      "ok": true
+    },
+    {
+      "name": "public artifacts contain no installation credential or private PEM",
+      "ok": true
+    },
+    {
+      "name": "file store: installation loads",
+      "ok": true
+    },
+    {
+      "name": "file store: signed catalog loads",
+      "ok": true
+    },
+    {
+      "name": "file store: runtime bundle loads",
+      "ok": true
+    },
+    {
+      "name": "file store: ROI knowledge is searchable",
+      "ok": true,
+      "detail": "kb-roi-calculator, kb-sample-roi, kb-coverage-gap"
+    },
+    {
+      "name": "file store: coverage boundary is searchable",
+      "ok": true,
+      "detail": "kb-coverage-gap, kb-auth, kb-engagement, kb-routes"
+    }
+  ],
+  "allPassed": true
+}

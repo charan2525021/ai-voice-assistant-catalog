@@ -1,0 +1,33 @@
+{
+  "organizationId": "00000000-0000-4000-8000-000000000001",
+  "name": "lovable",
+  "startUrl": "https://lovable.dev/dashboard",
+  "auth": {
+    "mode": "profile",
+    "sessionCapturedAt": "2026-08-10T13:14:23.297Z",
+    "sessionOrigins": [
+      "lovable.dev",
+      "hsadspixel.net",
+      "hs-scripts.com",
+      "tiktok.com",
+      "linkedin.com",
+      "hubspot.com",
+      "bing.com",
+      "bat.bing.com",
+      "ispot.tv",
+      "www.linkedin.com",
+      "pxf.io",
+      "doubleclick.net"
+    ]
+  },
+  "allowActions": [],
+  "voice": {},
+  "createdAt": "2026-08-10T13:10:30.270Z",
+  "onboarding": {
+    "status": "ready",
+    "message": "Ready — 8 verified journey(s).",
+    "updatedAt": "2026-08-10T13:56:09.276Z",
+    "docChunks": 1301,
+    "verifiedJourneys": 8
+  }
+}

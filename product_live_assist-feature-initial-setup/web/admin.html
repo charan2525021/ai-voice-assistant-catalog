@@ -1,0 +1,1362 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Aidan — Admin Console</title>
+    <style>
+      * { box-sizing: border-box; }
+      body { margin:0; font-family:-apple-system,Segoe UI,Roboto,sans-serif; background:#0f1115; color:#e6e8ec; }
+      a { color:#6aa9e9; }
+      header { padding:14px 22px; background:#171a21; border-bottom:1px solid #262b36; display:flex; align-items:center; gap:14px; }
+      header h1 { margin:0; font-size:16px; font-weight:650; }
+      header .sub { color:#8a93a3; font-size:12px; }
+      header .right { margin-left:auto; display:flex; gap:8px; align-items:center; }
+      .btn { background:#2a3140; color:#e6e8ec; border:0; border-radius:9px; padding:8px 13px; font-size:13px; cursor:pointer; font-weight:600; }
+      .btn.primary { background:#2b6cb0; color:#fff; }
+      .btn.go { background:#1f9d63; color:#fff; }
+      .btn.danger { background:#7f2d36; color:#fff; }
+      .btn:disabled { opacity:.45; cursor:default; }
+      main { display:grid; grid-template-columns:300px 1fr; min-height:calc(100vh - 55px); }
+      aside { border-right:1px solid #262b36; background:#12151b; padding:14px; }
+      aside h2 { font-size:11px; text-transform:uppercase; letter-spacing:.08em; color:#8a93a3; margin:4px 0 10px; }
+      .prod { display:block; width:100%; text-align:left; font:inherit; color:inherit; background:transparent; padding:10px 11px; border-radius:10px; cursor:pointer; margin-bottom:6px; border:1px solid transparent; }
+      .prod:hover { background:#171a21; }
+      .prod.sel { background:#1b2331; border-color:#2b6cb0; }
+      .prod .n { font-size:13px; font-weight:600; }
+      .prod .m { font-size:11px; color:#8a93a3; margin-top:3px; }
+      /* Row wrapper: the archive control cannot live INSIDE .prod, because a
+         button nested in a button is invalid and swallows the outer click. */
+      .prodrow { display:flex; align-items:stretch; gap:4px; margin-bottom:6px; }
+      .prodrow .prod { flex:1; margin-bottom:0; }
+      .prod-del { flex:0 0 auto; width:30px; background:transparent; border:1px solid transparent;
+                  border-radius:9px; color:#4b5563; cursor:pointer; font:inherit; font-size:13px; line-height:1; }
+      .prodrow:hover .prod-del { color:#8a93a3; }
+      .prod-del:hover { background:#3d1f22; border-color:#7f3a40; color:#f7c3c8; }
+      .prod-del[disabled] { opacity:.5; cursor:progress; }
+      .pill { display:inline-block; font-size:10px; padding:2px 7px; border-radius:99px; background:#2a3140; color:#c8cfdb; }
+      .pill.ready { background:#1c3d2b; color:#6ee7a8; } .pill.fail { background:#3d1f22; color:#f19aa2; }
+      .pill.busy { background:#3a3320; color:#f0c36b; }
+      section { padding:20px 24px; overflow:auto; }
+      .cards { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:10px; margin-bottom:18px; }
+      .card { background:#171a21; border:1px solid #262b36; border-radius:12px; padding:13px 15px; }
+      .card .k { font-size:11px; color:#8a93a3; text-transform:uppercase; letter-spacing:.06em; }
+      .card .v { font-size:21px; font-weight:650; margin-top:5px; }
+      .panel { background:#171a21; border:1px solid #262b36; border-radius:12px; padding:16px 18px; margin-bottom:16px; }
+      .panel h3 { margin:0 0 4px; font-size:14px; }
+      .panel p.h { margin:0 0 13px; color:#8a93a3; font-size:12px; line-height:1.55; }
+      label { display:block; font-size:11px; color:#8a93a3; margin:11px 0 4px; text-transform:uppercase; letter-spacing:.05em; }
+      input, textarea, select { width:100%; background:#0f1115; border:1px solid #2a3140; color:#e6e8ec; border-radius:8px; padding:9px 10px; font-size:13px; font-family:inherit; resize:vertical; }
+      .row { display:flex; gap:10px; } .row > div { flex:1; }
+      .j { border:1px solid #262b36; border-radius:10px; margin-bottom:9px; overflow:hidden; }
+      .j .head { width:100%; text-align:left; font:inherit; color:inherit; border:0; padding:10px 13px; cursor:pointer; display:flex; gap:9px; align-items:center; background:#141821; }
+      .j .head:hover { background:#191e29; }
+      .j .body { padding:11px 15px; border-top:1px solid #262b36; display:none; font-size:12.5px; }
+      .j.open .body { display:block; }
+      .step { padding:5px 0; border-bottom:1px dashed #232a36; }
+      .step:last-child { border-bottom:0; }
+      .say { color:#8ad9b0; } .mono { font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:11.5px; color:#9fb0c7; }
+      .log { background:#0b0e13; border:1px solid #262b36; border-radius:9px; padding:11px; font-size:11.5px; color:#9fb0c7; white-space:pre-wrap; max-height:220px; overflow:auto; font-family:ui-monospace,Menlo,monospace; }
+      table { width:100%; border-collapse:collapse; font-size:12.5px; }
+      td, th { text-align:left; padding:6px 8px; border-bottom:1px solid #232a36; }
+      th { color:#8a93a3; font-weight:600; font-size:11px; text-transform:uppercase; }
+      .empty { color:#6b7280; font-size:12.5px; padding:8px 0; }
+      .tabs { display:flex; gap:6px; margin-bottom:14px; flex-wrap:wrap; }
+      .ev { display:grid; grid-template-columns:74px 150px 1fr 78px 74px; gap:10px; align-items:baseline;
+            padding:7px 10px; border-bottom:1px solid #1b2029; font-size:12px; }
+      .ev:hover { background:#141922; }
+      .ev .t { color:#6f7887; font-variant-numeric:tabular-nums; }
+      .ev .k { font-weight:600; }
+      .ev .d { color:#98a2b3; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+      .ev .ms, .ev .c { text-align:right; color:#8a93a3; font-variant-numeric:tabular-nums; }
+      .ev.err { background:#2a1618; }
+      .ev.err .k { color:#ff8b8b; }
+      .ev.start .k { color:#7aa2f7; }
+      .grp { margin-top:12px; border:1px solid #232a35; border-radius:10px; overflow:hidden; }
+      .grp > .hd { background:#151a22; padding:9px 12px; font-size:12px; display:flex; gap:10px; align-items:center; }
+      .grp > .hd b { font-size:13px; }
+      details.grp > summary.hd { cursor:pointer; list-style:none; }
+      details.grp > summary.hd::-webkit-details-marker { display:none; }
+      .evdetail { border-bottom:1px solid #1b2029; }
+      .evdetail > summary { cursor:pointer; list-style:none; border-bottom:0; }
+      .evdetail > summary::-webkit-details-marker { display:none; }
+      .evdetail > pre { margin:0; padding:12px 18px 16px 94px; background:#0b0e13; color:#aab8ca;
+                        white-space:pre-wrap; overflow-wrap:anywhere; max-height:560px; overflow:auto;
+                        font:11.5px/1.55 ui-monospace,SFMono-Regular,Menlo,monospace; border-top:1px solid #202632; }
+      .copytrace { margin-left:auto; padding:5px 9px; font-size:11px; }
+      .strip { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:12px; }
+      .chip2 { background:#151a22; border:1px solid #232a35; border-radius:8px; padding:7px 11px; font-size:12px; }
+      .chip2 b { font-size:15px; display:block; margin-top:2px; }
+      .tab { background:#1b2028; border:1px solid #262b36; color:#c8cfdb; border-radius:8px; padding:7px 12px; font:inherit; font-size:12.5px; cursor:pointer; }
+      .tab.on { background:#2b6cb0; color:#fff; border-color:#2b6cb0; }
+      .segs { display:flex; gap:6px; flex-wrap:wrap; }
+      .seg { background:#1b2028; border:1px solid #262b36; color:#c8cfdb; border-radius:8px; padding:8px 12px; font:inherit; font-size:12.5px; cursor:pointer; }
+      .seg.on { background:#2b6cb0; color:#fff; border-color:#2b6cb0; }
+      .ssoNote { background:#14202c; border:1px solid #24384a; color:#a8c4dc; padding:10px 12px; border-radius:9px; font-size:12px; line-height:1.6; margin-top:10px; }
+      #signin { position:fixed; inset:0; background:rgba(0,0,0,.75); display:none; align-items:center; justify-content:center; z-index:60; }
+      #dsk { position:fixed; inset:0; background:rgba(0,0,0,.78); display:none; align-items:center; justify-content:center; z-index:70; }
+      #dsk.open { display:flex; }
+      #dsk .win { background:#0e1116; border:1px solid #232a35; border-radius:14px; max-width:620px; width:92%; padding:22px; }
+      #dsk h3 { margin:0 0 6px; font-size:17px; }
+      #dsk ol { margin:12px 0 0 18px; padding:0; font-size:13px; line-height:2; color:#c6cedb; }
+      #dsk .state { margin-top:14px; font-size:12px; color:#8a93a3; }
+      #dsk .state b.live { color:#4fd18b; }
+      #signin.open { display:flex; }
+      #signin .win { background:#171a21; border:1px solid #2a3140; border-radius:14px; padding:16px; width:min(1200px,95vw); }
+      #signin .top { display:flex; gap:10px; align-items:center; margin-bottom:10px; }
+      #signin .top .u { flex:1; font-size:12px; color:#8a93a3; font-family:ui-monospace,Menlo,monospace; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+      #signin .screen { width:100%; background:#000; border-radius:10px; display:block; cursor:pointer; }
+      /* Invisible but real: it must be focusable and receive keys, not just look it. */
+      #siKeys { position:absolute; inset:0; width:100%; height:100%; opacity:0; resize:none; border:0; padding:0;
+                background:transparent; color:transparent; cursor:crosshair; caret-color:transparent; }
+      #siStage:focus-within { box-shadow:0 0 0 2px #1f9d63; border-radius:10px; }
+      #signin .kbd { position:absolute; left:10px; bottom:10px; background:rgba(0,0,0,.72); border:1px solid #2a3140; color:#c8cfdb; font-size:11.5px; padding:5px 9px; border-radius:8px; pointer-events:none; }
+      #signin .kbd.live { border-color:#1f9d63; color:#8ad9b0; }
+      #signin .note { font-size:12px; color:#8a93a3; margin-top:10px; line-height:1.55; }
+      #signin .warn { background:#2a1f14; border:1px solid #4a3620; color:#f0c36b; padding:9px 11px; border-radius:9px; font-size:12px; margin-top:10px; }
+      #trainer { position:fixed; inset:0; background:rgba(0,0,0,.82); display:none; align-items:center; justify-content:center; z-index:80; }
+      #trainer.open { display:flex; }
+      #trainer .win { width:min(1380px,97vw); max-height:96vh; overflow:auto; background:#11151c; border:1px solid #2a3140; border-radius:14px; padding:14px; }
+      #trainer .layout { display:grid; grid-template-columns:minmax(600px,1fr) 330px; gap:14px; }
+      #trainer .screen { width:100%; background:#000; border-radius:10px; display:block; }
+      #trStage { position:relative; }
+      #trKeys { position:absolute; inset:0; width:100%; height:100%; opacity:0; resize:none; border:0; padding:0; background:transparent; color:transparent; cursor:crosshair; caret-color:transparent; }
+      #trStage:focus-within { box-shadow:0 0 0 2px #1f9d63; border-radius:10px; }
+      .review-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:8px; margin:10px 0 14px; }
+      .review-item { border:1px solid #2a3140; background:#121720; border-radius:10px; padding:11px; }
+      .review-item .title { display:flex; gap:7px; align-items:center; margin-bottom:7px; }
+      .review-item .meta { color:#8a93a3; font-size:11.5px; line-height:1.55; }
+      .progressline { display:grid; grid-template-columns:150px 1fr 100px; gap:10px; align-items:center; padding:8px 0; border-bottom:1px solid #232a36; font-size:12px; }
+      .audit-note { border-left:3px solid #2b6cb0; background:#121923; padding:9px 11px; color:#aeb9c9; font-size:12px; line-height:1.55; margin-bottom:12px; }
+      @media (max-width:900px) { #trainer .layout { grid-template-columns:1fr; } main { grid-template-columns:1fr; } aside { display:none; } }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>Aidan — Admin Console</h1>
+      <span class="sub">link a product · map its journeys · inspect everything stored</span>
+      <span class="right">
+        <span class="sub" id="cost"></span>
+        <span id="who" style="color:#8a93a3;font-size:12px;margin-right:10px"></span>
+        <button class="btn" id="refresh">Refresh</button>
+        <button class="btn" id="signout">Sign out</button>
+        <a class="btn primary" href="/" target="_blank">Open demo →</a>
+      </span>
+    </header>
+
+    <!--
+      Desktop-Chrome sign-in. Not a streamed window: Google will not complete OAuth
+      inside Playwright's Chromium at all ("this browser or app may not be secure"),
+      so the sign-in happens in the user's real Chrome and we adopt the profile.
+    -->
+    <div id="dsk">
+      <div class="win">
+        <h3>Sign in with your real Chrome</h3>
+        <p class="h" id="dskWho"></p>
+        <div class="ssoNote">
+          Google blocks sign-in inside automated browsers, so this opens <b>your own Google Chrome</b> in a
+          separate window using a private profile that belongs to this product only — not your personal Chrome
+          profile. Your password and 2FA codes are typed into Chrome by you and <b>never reach this platform</b>.
+        </div>
+        <ol>
+          <li>A Chrome window just opened — find it on your desktop.</li>
+          <li>Sign in there however you normally do (Continue with Google, SSO, 2FA).</li>
+          <li>Keep going until you can see the product's own dashboard.</li>
+          <li>Come back here and press <b>I'm signed in</b>.</li>
+        </ol>
+        <div class="state">Chrome window: <b id="dskState">opening…</b></div>
+        <div class="row" style="gap:8px;margin-top:16px">
+          <button class="btn go" id="dskDone">I'm signed in — grant access</button>
+          <button class="btn" id="dskReopen">Reopen Chrome</button>
+          <button class="btn" id="dskCancel">Cancel</button>
+        </div>
+        <div class="log" id="dskLog" style="margin-top:12px;display:none"></div>
+      </div>
+    </div>
+
+    <div id="signin">
+      <div class="win">
+        <div class="top">
+          <b style="font-size:14px">Sign in to the product</b>
+          <span class="u" id="siUrl"></span>
+          <button class="btn" id="siWhere">Refresh URL</button>
+          <button class="btn" id="siCancel">Cancel</button>
+          <button class="btn go" id="siDone">I'm signed in — grant access</button>
+        </div>
+        <div id="siStage" style="position:relative">
+          <img class="screen" id="siScreen" alt="sign-in window" />
+          <!--
+            A real <textarea> sits invisibly over the stream. A div[tabindex] plus a
+            mousedown preventDefault looked equivalent but browsers would not reliably
+            deliver keystrokes to it, so typing silently went nowhere. A genuine form
+            control gets focus on click and receives every key, including IME and paste.
+          -->
+          <textarea id="siKeys" aria-label="keyboard and mouse input for the product window"
+            autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"></textarea>
+          <div id="siKbd" class="kbd">⌨ click the window, then type</div>
+        </div>
+        <div class="note">Click and type directly in this window — including <b>Sign in with Google</b>, SSO and 2FA.
+          Your password goes straight into the product and is <b>never sent to or stored by this platform</b>.</div>
+        <div class="warn">When you grant access we store the resulting <b>browser session</b> for this product. That session
+          can act as your account until it expires — you can revoke it any time from the product panel.</div>
+      </div>
+    </div>
+
+    <div id="trainer">
+      <div class="win">
+        <div style="display:flex;gap:9px;align-items:center;margin-bottom:10px">
+          <b>Teach a journey by doing it once</b>
+          <span class="sub" id="trUrl" style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"></span>
+          <button class="btn" id="trCancel">Cancel</button>
+        </div>
+        <div class="layout">
+          <div id="trStage">
+            <img class="screen" id="trScreen" alt="live product training window" />
+            <textarea id="trKeys" aria-label="keyboard and mouse input for journey demonstration"
+              autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"></textarea>
+          </div>
+          <div>
+            <div class="audit-note">Every click and field entry is captured as a reusable step. Finishing triggers clean-state replay; the result still requires explicit approval.</div>
+            <label>Journey goal</label><input id="trGoal" placeholder="e.g. Create a new API key" />
+            <label>Capability</label><input id="trCapability" placeholder="optional" />
+            <label>Visible proof after completion</label><select id="trProof"><option value="">Detect the strongest proof</option></select>
+            <div class="log" id="trLog" style="margin-top:10px;max-height:260px">Recording ready — use the product window.</div>
+            <button class="btn go" id="trFinish" style="width:100%;margin-top:10px">Finish, replay and verify</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <main>
+      <aside>
+        <h2>Products</h2>
+        <div id="list"></div>
+        <button class="btn primary" id="newBtn" style="width:100%;margin-top:10px">+ Link a product</button>
+      </aside>
+
+      <section id="detail"></section>
+    </main>
+
+    <script>
+      let products = [], selected = null, poll = null, trainingStream = null, trainingRefresh = null, tab = "training";
+      const $ = (id) => document.getElementById(id);
+
+      /*
+       * One place that understands "signed out". Every fetch goes through this, so
+       * an expired session sends you to the login form instead of rendering an
+       * empty console that looks like data loss.
+       */
+      async function api(url, opts) {
+        const res = await fetch(url, opts);
+        if (res.status === 401) {
+          location.href = "/login.html?next=" + encodeURIComponent(location.pathname + location.search);
+          throw new Error("signed out");
+        }
+        return res;
+      }
+      const esc = (s) => String(s ?? "").replace(/[<>&"']/g, (c) => ({ "<": "&lt;", ">": "&gt;", "&": "&amp;", '"': "&quot;", "'": "&#39;" }[c]));
+
+      /*
+       * Archiving is the safe console operation: it stops sessions, revokes the
+       * share link and hides the product, while retaining its map for recovery.
+       */
+      async function removeProduct(btn, id, name) {
+        const p = products.find((x) => x.id === id);
+        const bits = [];
+        if (p?.verifiedJourneys > 0) bits.push(`${p.verifiedJourneys} verified journey(s)`);
+        if (p?.auth?.mode && p.auth.mode !== "none") bits.push("the stored sign-in for this product");
+        if (p?.job?.running) bits.push("a mapping run that is still in progress");
+        const detail = bits.length ? `\n\nThis will stop/revoke:\n · ${bits.join("\n · ")}` : "";
+        if (!confirm(`Archive "${name}"?${detail}\n\nIts map and knowledge are retained for recovery.`)) return;
+
+        btn.disabled = true;
+        btn.textContent = "…";
+        try {
+          const res = await api(`/api/products/${encodeURIComponent(id)}/archive`, { method: "POST" });
+          if (!res.ok) throw new Error(((await res.json().catch(() => ({}))).error) || `archive failed (${res.status})`);
+          if (selected === id) { selected = null; $("detail").innerHTML = '<div class="empty">Select a product.</div>'; }
+          await loadList();
+        } catch (e) {
+          alert(`Could not archive "${name}": ${e.message}`);
+          btn.disabled = false;
+          btn.textContent = "✕";
+        }
+      }
+
+      async function loadList() {
+        const d = await (await api("/api/products")).json();
+        products = d.products;
+        $("list").innerHTML = products.map((p) => {
+          const busy = p.job && p.job.running;
+          const released = p.machineVerifiedJourneys > 0 && p.machineVerifiedJourneys === p.verifiedJourneys;
+          const review = p.machineVerifiedJourneys > 0 && !released;
+          const stale = p.mappedJourneys > 0 && p.machineVerifiedJourneys === 0;
+          const st = busy ? "busy" : released ? "ready" : review ? "busy" : (stale || p.onboarding?.status === "preflight_failed" ? "fail" : "");
+          const label = busy ? "mapping…" : released ? p.verifiedJourneys + " released" : review ? `${p.verifiedJourneys}/${p.machineVerifiedJourneys} approved` : stale ? "needs re-verification" : (p.onboarding?.status ?? "new");
+          return `<div class="prodrow">
+            <button type="button" class="prod ${selected===p.id?"sel":""}" data-id="${p.id}" aria-pressed="${selected===p.id}">
+              <div class="n">${esc(p.name)}</div>
+              <div class="m"><span class="pill ${st}">${esc(label)}</span> ${p.auth?.mode === "login" ? "🔑" : p.auth?.mode === "session" ? "🔐" : p.auth?.mode === "profile" ? "🪪" : ""}</div>
+            </button>
+            <button type="button" class="prod-del" data-del="${p.id}" data-name="${esc(p.name)}"
+                    title="Archive ${esc(p.name)}" aria-label="Archive ${esc(p.name)}">✕</button>
+          </div>`;
+        }).join("") || '<div class="empty">No products yet.</div>';
+        for (const el of document.querySelectorAll(".prod")) el.onclick = () => select(el.dataset.id);
+        for (const el of document.querySelectorAll(".prod-del")) el.onclick = (ev) => { ev.stopPropagation(); removeProduct(el, el.dataset.del, el.dataset.name); };
+        const t = await (await api("/api/telemetry")).json();
+        $("cost").textContent = `spend $${(t.total?.costUsd ?? 0).toFixed(4)} · tts cache ${Math.round((t.ttsCache?.hitRate ?? 0)*100)}%`;
+      }
+
+      async function select(id) {
+        selected = id; tab = "training";
+        trainingStream?.close(); trainingStream = null;
+        await loadList(); await render();
+        trainingStream = new EventSource(`/api/products/${encodeURIComponent(id)}/training/stream`);
+        trainingStream.addEventListener("training", () => {
+          clearTimeout(trainingRefresh);
+          trainingRefresh = setTimeout(() => {
+            if (selected !== id || ["INPUT","TEXTAREA","SELECT"].includes(document.activeElement?.tagName)) return;
+            loadList().then(() => render(true)).catch(() => {});
+          }, 250);
+        });
+      }
+
+      function setPoll(on) {
+        clearInterval(poll); poll = null;
+        if (on) poll = setInterval(async () => { await loadList(); await render(true); }, 4000);
+      }
+
+      /*
+       * Mirror mapping progress into the devtools console.
+       *
+       * The on-screen box keeps only the last 14 lines and scrolls away, which
+       * makes a failed run almost impossible to report accurately. The console
+       * keeps everything, timestamped, and survives re-renders — so "open
+       * devtools and copy" is a complete answer rather than a partial one.
+       * Full text is also on the clipboard via the Copy logs button.
+       */
+      const loggedLines = new Map(); // product id → how many lines already printed
+      function mirrorJobLog(id, lines) {
+        const seen = loggedLines.get(id) ?? 0;
+        if (lines.length < seen) loggedLines.set(id, 0); // a new run restarted the list
+        for (const line of lines.slice(loggedLines.get(id) ?? 0)) {
+          const stamp = new Date().toISOString().slice(11, 19);
+          const style = /✗|failed|error|could not/i.test(line) ? "color:#f87171"
+                      : /✓|verified|done|ready/i.test(line) ? "color:#4ade80" : "color:#9fb0c7";
+          console.log(`%c[${stamp}] [${id}] ${line}`, style);
+        }
+        loggedLines.set(id, lines.length);
+      }
+
+      window.aidanLogs = (id) => (window.__lastJobLines?.[id ?? selected] ?? []).join("\n");
+
+      async function render(quiet) {
+        if (!selected) return void ($("detail").innerHTML = intro());
+        const d = await (await api(`/api/products/${selected}/inspect`)).json();
+        if (d.error) return void ($("detail").innerHTML = `<div class="empty">${esc(d.error)}</div>`);
+        const running = d.job && d.job.running;
+        setPoll(!!running);
+        window.__lastJobLines = window.__lastJobLines || {};
+        window.__lastJobLines[selected] = d.job?.lines || [];
+        if ((d.job?.lines || []).length) mirrorJobLog(selected, d.job.lines);
+        /*
+         * Access is the blocker when preflight failed on a login, or nothing has
+         * been mapped and no session exists yet. Surfacing this was the missing
+         * piece: a "failed" pill with no next step left the user stuck.
+         */
+        const ost = d.product.onboarding?.status;
+        const authed = d.product.auth?.mode === "session" || d.product.auth?.mode === "profile";
+        /*
+         * Only claim sign-in is the blocker when there is EVIDENCE of it. The old
+         * rule counted "new product with no journeys" as an auth problem, so a
+         * public no-login product was told to sign in to itself — the console's
+         * most prominent message was simply wrong. Not-yet-mapped is a different
+         * state with a different fix, so it gets its own prompt.
+         */
+        const authEvidence =
+          ost === "preflight_failed" || /sign in|signin|log in|login|password|auth/i.test(d.product.onboarding?.message ?? "");
+        const needsAuth = !authed && d.product.auth?.mode !== "none" && authEvidence;
+        const needsMapping = !needsAuth && !(d.graph?.journeys || []).length && !running;
+
+        const g = d.graph || { screens: [], journeys: [], capabilities: [], backlog: [] };
+        const machineVerified = g.journeys.filter((j) => j.machineVerified);
+        const verified = g.journeys.filter((j) => j.publishEligible);
+        const awaitingReview = machineVerified.filter((j) => !j.publishEligible).length;
+        const narrated = verified.reduce((n, j) => n + j.steps.filter((s) => s.say).length, 0);
+        const totalSteps = verified.reduce((n, j) => n + j.steps.length, 0);
+        const releaseReady = machineVerified.length > 0 && verified.length === machineVerified.length;
+        const effectiveStatus = running ? "mapping…" : releaseReady ? "ready" : machineVerified.length ? "awaiting review" : g.journeys.length ? "needs re-verification" : (d.product.onboarding?.status ?? "new");
+        const effectiveMessage = !running && g.journeys.length && !machineVerified.length
+          ? "Existing journeys predate the current clean-replay evidence policy. Re-map or teach them again before approval."
+          : machineVerified.length && !releaseReady
+            ? `${verified.length}/${machineVerified.length} machine-verified journey(s) approved; the current live catalog is unchanged.`
+            : (d.product.onboarding?.message ?? "");
+
+        $("detail").innerHTML = `
+          <div class="cards">
+            <div class="card"><div class="k">Screens</div><div class="v">${g.screens.length}</div></div>
+            <div class="card"><div class="k">Machine verified</div><div class="v">${machineVerified.length}<span style="font-size:12px;color:#8a93a3"> / ${g.journeys.length}</span></div></div>
+            <div class="card"><div class="k">Approved</div><div class="v">${verified.length}${awaitingReview?`<span style="font-size:12px;color:#f0c36b"> · ${awaitingReview} waiting</span>`:""}</div></div>
+            <div class="card"><div class="k">Capabilities</div><div class="v">${g.capabilities.length}</div></div>
+            <div class="card"><div class="k">Doc chunks</div><div class="v">${d.knowledge.docChunks}</div></div>
+            <div class="card"><div class="k">Narrated steps</div><div class="v">${narrated}<span style="font-size:12px;color:#8a93a3"> / ${totalSteps}</span></div></div>
+            <div class="card"><div class="k">Demo sessions</div><div class="v">${d.learning.sessions}</div></div>
+          </div>
+
+          <div class="panel">
+            <h3>${esc(d.product.name)} <span class="pill ${running||machineVerified.length&&!releaseReady?"busy":releaseReady?"ready":g.journeys.length?"fail":""}">${esc(effectiveStatus)}</span></h3>
+            <p class="h">${esc(d.product.startUrl)}${d.product.auth?.mode === "login" ? ` · form login as <b>${esc(d.product.auth.username)}</b>`
+              : d.product.auth?.mode === "profile" ? ` · <b>signed in via Chrome profile</b>${d.product.auth.accountLabel?` as ${esc(d.product.auth.accountLabel)}`:""}${d.product.auth.sessionCapturedAt?` ${esc(new Date(d.product.auth.sessionCapturedAt).toLocaleString())}`:""}${d.product.auth.sessionOrigins?.length?` (${esc(d.product.auth.sessionOrigins.slice(0,3).join(", "))})`:""}`
+              : d.product.auth?.mode === "session" ? ` · <b>session captured</b>${d.product.auth.accountLabel?` as ${esc(d.product.auth.accountLabel)}`:""}${d.product.auth.sessionCapturedAt?` ${esc(new Date(d.product.auth.sessionCapturedAt).toLocaleString())}`:""}${d.product.auth.sessionOrigins?.length?` (${esc(d.product.auth.sessionOrigins.slice(0,3).join(", "))})`:""}`
+              : " · no login"}
+            ${d.voice?.speaker ? ` · voice <b>${esc(d.voice.speaker)}</b>` : ""}<br>${esc(effectiveMessage)}</p>
+            ${needsMapping ? `<div class="ssoNote" style="margin-bottom:12px">
+              <b>Nothing mapped yet.</b> Press <b>Start journey mapping</b> and the platform will explore this
+              product on its own, verify each journey by replaying it from a clean state, and write the spoken
+              narration. Everything it learns shows up in the tabs below as it goes.</div>` : ""}
+            ${needsAuth ? `<div class="ssoNote" style="margin-bottom:12px">
+              <b>This product needs you to sign in before it can be mapped.</b><br>
+              Press <b>Sign in with Chrome</b> — your own Google Chrome opens on a private profile for this
+              product. Complete “Continue with Google”, SSO or 2FA there yourself; your email and password never
+              reach this platform. Once you grant access, journey mapping can start.<br>
+              <span style="color:#8a93a3">Google refuses to sign in inside an automated browser, which is why this
+              step uses real Chrome rather than the in-app window.</span></div>` : ""}
+            <div class="row" style="gap:8px">
+              <button class="btn ${needsAuth ? "" : "go"}" id="mapBtn" ${running?"disabled":""}>${verified.length ? "Re-map journeys" : "▶ Start journey mapping"}</button>
+              <button class="btn" id="preBtn" ${running?"disabled":""}>Re-check access</button>
+              <button class="btn ${needsAuth ? "go" : ""}" id="dskBtn">${authed ? "🔐 Re-authenticate in Chrome" : "🔐 Sign in with Chrome (Google / SSO)"}</button>
+              <button class="btn" id="signInBtn" title="Streamed window — works for ordinary username/password forms, but Google will refuse it">Sign in in-app</button>
+              ${authed ? '<button class="btn" id="clearAuthBtn">Revoke access</button>' : ""}
+              <a class="btn primary" href="/?product=${encodeURIComponent(d.product.id)}" target="_blank">Run demo →</a>
+              <button class="btn" id="shareBtn">${d.product.share ? "🔗 Copy share link" : "🔗 Create share link"}</button>
+              ${d.product.share ? '<button class="btn" id="revokeShareBtn">Revoke link</button>' : ""}
+              <button class="btn" id="versionsBtn">↩ Versions</button>
+              <button class="btn" id="teachBtn">◉ Teach a journey</button>
+            </div>
+            ${running || (d.job.lines||[]).length ? `
+              <div style="display:flex;align-items:center;gap:8px;margin-top:12px">
+                <span class="sub">Mapping log — ${(d.job.lines||[]).length} line(s)${running ? " · running" : ""}</span>
+                <button type="button" class="btn" id="copyLog" style="padding:4px 10px;font-size:11px">Copy logs</button>
+                <span class="sub" id="copyLogMsg"></span>
+              </div>
+              <!-- join("\n"), ONE backslash. This read join("\\n"), which inside a
+                   template literal is a literal backslash-n, so every line ran
+                   together with a visible \n between them. .log already sets
+                   white-space:pre-wrap, so real newlines render correctly. -->
+              <div class="log" style="margin-top:6px">${esc((d.job.lines||[]).slice(-14).join("\n") || "starting…")}</div>` : ""}
+          </div>
+
+          <div class="tabs">
+            ${["training","overview","journeys","activity","documents","learning"].map((t)=>`<button type="button" class="tab ${tab===t?"on":""}" data-tab="${t}" aria-pressed="${tab===t}">${t[0].toUpperCase()+t.slice(1)}</button>`).join("")}
+          </div>
+          <div id="tabBody"></div>
+        `;
+
+        $("mapBtn").onclick = async () => {
+          $("mapBtn").disabled = true;
+          const response = await api(`/api/products/${selected}/onboard`, { method:"POST", headers:{"content-type":"application/json"}, body: JSON.stringify({}) });
+          const result = await response.json();
+          if (!response.ok) {
+            if (result.code === "AUTH_REQUIRED") {
+              await startDesktopSignIn(selected, d.product.startUrl);
+            } else {
+              alert(result.error || "Access check failed; mapping was not started.");
+            }
+            $("mapBtn").disabled = false;
+            return;
+          }
+          setPoll(true); await render();
+        };
+        /*
+         * Copy the WHOLE log, not the 14 lines on screen, plus the context that
+         * is always needed alongside it: which product, which URL, what the
+         * mapper concluded, and how much of the graph and knowledge exists.
+         * Reporting a mapping failure without those four numbers is what makes
+         * a bug report unactionable.
+         */
+        if ($("copyLog")) $("copyLog").onclick = async () => {
+          const g = d.graph || {};
+          const report = [
+            `product: ${d.product.id} (${d.product.name})`,
+            `startUrl: ${d.product.startUrl}`,
+            `auth: ${d.product.auth?.mode ?? "none"}`,
+            `status: ${d.product.onboarding?.status ?? "new"} — ${d.product.onboarding?.message ?? ""}`,
+            `screens: ${(g.screens||[]).length}  journeys: ${(g.journeys||[]).length}  publishable: ${(g.journeys||[]).filter(j=>j.publishEligible).length}  capabilities: ${(g.capabilities||[]).length}`,
+            `docChunks: ${d.knowledge?.docChunks ?? 0}  embedded: ${d.knowledge?.embedded ?? 0}  sources: ${(d.knowledge?.sources||[]).join(", ") || "none"}`,
+            `running: ${!!running}`,
+            "",
+            `--- mapping log (${(d.job.lines||[]).length} lines) ---`,
+            ...(d.job.lines || []),
+            ...(d.job.error ? ["", `--- error ---`, d.job.error] : []),
+          ].join("\n");
+          try {
+            await navigator.clipboard.writeText(report);
+            $("copyLogMsg").textContent = `copied ${report.split("\n").length} lines`;
+          } catch {
+            // Clipboard needs a secure context; over plain http on a LAN address
+            // it throws. Dumping to the console is always available.
+            console.log(report);
+            $("copyLogMsg").textContent = "clipboard blocked — full log printed to console";
+          }
+          setTimeout(() => { if ($("copyLogMsg")) $("copyLogMsg").textContent = ""; }, 4000);
+        };
+        $("signInBtn").onclick = () => startSignIn(d.product.id, d.product.startUrl);
+        $("dskBtn").onclick = () => startDesktopSignIn(d.product.id, d.product.startUrl);
+        $("shareBtn").onclick = () => makeShare(d.product.id);
+        $("versionsBtn").onclick = () => showVersions(d.product.id);
+        $("teachBtn").onclick = () => startTrainer(d.product.id);
+        const rs = $("revokeShareBtn");
+        if (rs) rs.onclick = () => revokeShare(d.product.id);
+        const clearBtn = $("clearAuthBtn");
+        if (clearBtn) clearBtn.onclick = async () => {
+          if (!confirm("Revoke the stored session for this product?")) return;
+          await api(`/api/products/${d.product.id}/auth/clear`, { method:"POST" });
+          await loadList(); await render();
+        };
+        $("preBtn").onclick = async () => {
+          $("preBtn").disabled = true;
+          const r = await (await api(`/api/products/${selected}/preflight`, { method:"POST" })).json();
+          alert((r.ok ? "✓ " : "✗ ") + r.message);
+          await loadList(); await render();
+        };
+        for (const el of document.querySelectorAll(".tab")) el.onclick = () => { tab = el.dataset.tab; renderTab(d); document.querySelectorAll(".tab").forEach(t=>t.classList.toggle("on", t.dataset.tab===tab)); };
+        renderTab(d);
+      }
+
+      /*
+       * Events arrive newest-last and flat. They are grouped by trace so the console
+       * shows "one mapping run" or "one demo" rather than an undifferentiated feed —
+       * a flat list of 300 model calls answers no question anyone actually has.
+       */
+      const activityNames = {
+        'http.request':'API request', 'crawl.page':'Crawler page', 'ingest.run':'Ingestion run',
+        'ingest.chunk':'Knowledge chunk', 'map.survey.screen':'Screen surveyed', 'map.survey.done':'Survey finished',
+        'map.plan':'Journey plan', 'map.explore.start':'Exploration started', 'map.explore.step':'Exploration step',
+        'map.explore.proof':'Proof decision', 'map.explore.done':'Exploration finished', 'map.minimize':'Path minimised',
+        'map.semantics':'Journey meaning and narration', 'map.coverage':'Coverage check', 'map.publish':'Journeys published',
+        'browser.start':'Browser started', 'browser.stop':'Browser stopped', 'browser.snapshot':'Screen snapshot',
+        'browser.action':'Browser action', 'browser.navigate':'Browser navigation', 'safety.block':'Safety block',
+        'model.call':'Model call', 'model.prompt':'Model input and output', 'demo.turn':'Customer turn',
+        'retrieve.context':'Retrieved context', 'journey.replay.step':'Journey replay step',
+      };
+      const shortEventValue = (value, max=180) => {
+        let text;
+        try { text = typeof value === 'string' ? value : JSON.stringify(value); }
+        catch (_) { text = String(value); }
+        return text.length > max ? text.slice(0, max) + '…' : text;
+      };
+      function activitySummary(e) {
+        const d = e.data || {};
+        if (e.error) return e.error;
+        if (e.kind === 'http.request') return `${d.method} ${d.path} returned ${d.status}`;
+        if (e.kind === 'crawl.page') return `${d.url} returned ${d.status}; ${d.chunksProduced || 0} chunk(s)${d.duplicate ? '; duplicate' : ''}`;
+        if (e.kind === 'ingest.chunk') return `${d.title || d.source} → ${d.chunkId}, ${d.charCount || 0} characters`;
+        if (e.kind === 'map.explore.step') return `Step ${d.index}: ${d.tool || d.action} ${d.role || ''} ${d.name || ''} — ${d.outcome || ''}`;
+        if (e.kind === 'map.explore.proof') return `${d.accepted ? 'Accepted' : 'Rejected'} ${d.proofType || 'proof'}: ${d.proposedPostcondition || d.rejectionReason || ''}`;
+        if (e.kind === 'map.publish') return d.published === false
+          ? `Not published: ${d.reason || 'waiting for approval'}`
+          : `Published ${d.flowCount || 0} journey(s); ${d.executablePrograms || 0} executable`;
+        if (e.kind === 'browser.action') return `${d.action} ${d.role || ''} ${d.name || ''} — ${d.ok ? 'worked' : 'failed'}: ${d.detail || ''}`;
+        if (e.kind === 'browser.snapshot') return `${d.title || d.url}: ${d.elementCount || 0} identified element(s), ${d.textCharCount || 0} text characters`;
+        if (e.kind === 'model.call') return `${d.purpose || 'model'} → ${d.model || ''}; ${d.inTokens || 0} in / ${d.outTokens || 0} out`;
+        if (e.kind === 'model.prompt') return `Full ${d.purpose || 'model'} prompt, ${d.messages?.length || 0} message(s), ${d.responseToolCalls?.length || 0} tool call(s)`;
+        if (e.kind === 'demo.turn') return `${d.via || 'text'}: ${d.userText || ''} → ${d.intent || 'unclassified'}${d.matchedFlow ? `; matched ${d.matchedFlow}` : ''}`;
+        if (e.kind === 'retrieve.context') return `${d.intent || 'context'}; ${d.matchedChunks?.length || 0} chunk(s)${d.matchedFlow ? `; matched ${d.matchedFlow.name || d.matchedFlow}` : ''}`;
+        if (e.kind === 'journey.replay.step') return `Step ${d.index}: ${d.action} ${d.name || ''} — ${d.ok ? 'worked' : 'failed'}: ${d.detail || ''}`;
+        const bits = Object.entries(d).filter(([,v]) => v !== undefined && v !== null && v !== '' && (!Array.isArray(v) || v.length));
+        return bits.slice(0, 5).map(([k,v]) => `${k}=${shortEventValue(v)}`).join(' · ') || 'No additional detail';
+      }
+      const activityJson = (e) => JSON.stringify({
+        time:e.ts, event:e.kind, status:e.status, durationMs:e.ms, trace:e.trace, span:e.span,
+        parent:e.parent, data:e.data, error:e.error,
+      }, null, 2);
+
+      async function loadActivity(productId) {
+        const el = $("evBody"); if (!el) return;
+        let d;
+        try {
+          d = await (await api(`/api/products/${productId}/events?limit=5000`)).json();
+        } catch (e) {
+          el.innerHTML = `<div class="empty">Could not load activity: ${esc(e.message)}</div>`;
+          return;
+        }
+        const evs = d.events || [];
+        if (!evs.length) {
+          el.innerHTML = '<div class="empty">Nothing recorded yet. Map this product or run a demo, then look here.</div>';
+          return;
+        }
+        const r = d.rollup || {};
+        const worst = Object.entries(r.kinds || {}).sort((a,b)=>b[1].p95-a[1].p95)[0];
+
+        const traces = new Map();
+        for (const e of evs) {
+          if (!traces.has(e.trace)) traces.set(e.trace, []);
+          traces.get(e.trace).push(e);
+        }
+
+        const label = (rows) => {
+          const k = rows.map(x=>x.kind);
+          if (k.includes("map.run")) return "Journey mapping";
+          if (k.includes("ingest.run")) return "Knowledge ingestion";
+          if (k.includes("demo.start") || k.includes("demo.turn")) return "Demo session";
+          if (k.includes("map.publish")) return "Journey publication";
+          if (k.some(x=>x.startsWith("map.") || x.startsWith("browser."))) return "Journey mapping";
+          if (k.some(x=>x.startsWith("auth."))) return "Sign-in";
+          if (k.includes("product.linked")) return "Product linked";
+          return "Activity";
+        };
+
+        el.innerHTML = `
+          <div class="strip">
+            <div class="chip2">Events<b>${r.total ?? evs.length}</b></div>
+            <div class="chip2">Failures<b style="color:${r.errors?"#ff8b8b":"#4fd18b"}">${r.errors ?? 0}</b></div>
+            <div class="chip2">Model spend<b>$${(r.costUsd ?? 0).toFixed(4)}</b></div>
+            <div class="chip2">Tokens in / out<b>${(r.inTokens||0).toLocaleString()} / ${(r.outTokens||0).toLocaleString()}</b></div>
+            ${worst ? `<div class="chip2">Slowest step (p95)<b>${esc(worst[0])} ${worst[1].p95}ms</b></div>` : ""}
+            <button class="btn" id="copyAllEvents" style="margin-left:auto">Copy all visible logs</button>
+          </div>
+          ${[...traces.entries()].reverse().map(([id, rows], traceIndex) => {
+            const errs = rows.filter(x=>x.status==="error").length;
+            const cost = rows.reduce((n,x)=> n + Number(x.data?.costUsd || 0), 0);
+            const span = rows.length > 1
+              ? (new Date(rows[rows.length-1].ts) - new Date(rows[0].ts))
+              : (rows[0].ms || 0);
+            return `<details class="grp"${traceIndex === 0 ? " open" : ""}>
+              <summary class="hd">
+                <b>${label(rows)}</b>
+                <span class="pill ${errs?"":"ready"}">${rows.length} step${rows.length>1?"s":""}</span>
+                ${errs ? `<span class="pill busy">${errs} failed</span>` : ""}
+                <span style="color:#6f7887">${esc(new Date(rows[0].ts).toLocaleString())} · ${Math.round(span/100)/10}s${cost?` · $${cost.toFixed(4)}`:""}</span>
+                <span class="mono" style="color:#4a5261">${esc(id.slice(0,8))}</span>
+                <button class="btn copytrace" type="button" data-copy-trace="${esc(id)}">Copy this trace</button>
+              </summary>
+              ${rows.map(e=>{
+                const detail = activitySummary(e);
+                return `<details class="evdetail">
+                <summary class="ev ${e.status==="error"?"err":e.status==="start"?"start":""}">
+                  <span class="t">${esc(e.ts.slice(11,19))}</span>
+                  <span class="k" title="${esc(e.kind)}">${esc(activityNames[e.kind] || e.kind)}</span>
+                  <span class="d" title="${esc(detail)}">${esc(detail || "—")}</span>
+                  <span class="ms">${e.ms!=null?e.ms+"ms":""}</span>
+                  <span class="c">${e.data?.costUsd?"$"+Number(e.data.costUsd).toFixed(4):""}</span>
+                </summary>
+                <pre>${esc(activityJson(e))}</pre>
+                </details>`;
+              }).join("")}
+            </details>`;
+          }).join("")}`;
+        const copyEvents = async (rows) => {
+          const text = rows.map((event) => JSON.stringify(event)).join('\n');
+          try { await navigator.clipboard.writeText(text); }
+          catch (_) { prompt('Copy trace JSONL:', text); }
+        };
+        $('copyAllEvents').onclick = () => copyEvents(evs);
+        for (const button of el.querySelectorAll('[data-copy-trace]')) {
+          button.onclick = (event) => {
+            event.preventDefault();
+            event.stopPropagation();
+            copyEvents(traces.get(button.dataset.copyTrace) || []);
+          };
+        }
+      }
+
+      (async () => {
+        try {
+          const me = (await (await api("/api/auth/me")).json()).user;
+          if (me) $("who").textContent = `${me.email} · ${me.role}`;
+        } catch (e) { /* api() already redirected */ }
+      })();
+
+      $("signout").onclick = async () => {
+        await fetch("/api/auth/logout", { method: "POST" });
+        location.href = "/login.html";
+      };
+
+      /** Share links: hand this demo to a prospect without giving them an account. */
+      async function makeShare(productId) {
+        const r = await (await api(`/api/products/${productId}/share`, { method: "POST" })).json();
+        const url = location.origin + r.url;
+        try {
+          await navigator.clipboard.writeText(url);
+          alert("Share link copied to your clipboard:\n\n" + url + "\n\nAnyone with this link can run THIS product's demo — and nothing else. Rotate or revoke it any time.");
+        } catch (e) {
+          prompt("Share link (copy it):", url);
+        }
+      }
+
+      async function revokeShare(productId) {
+        if (!confirm("Revoke the share link? Anyone still holding it will lose access.")) return;
+        await api(`/api/products/${productId}/share`, { method: "DELETE" });
+        await render();
+      }
+
+      /** Previous graphs, so a bad re-map is recoverable. */
+      async function showVersions(productId) {
+        const r = await (await api(`/api/products/${productId}/graph/versions`)).json();
+        if (!r.versions.length) return void alert("No previous versions yet — one is kept each time mapping publishes a graph.");
+        const pick = prompt(
+          "Restore a previous knowledge graph:\n\n" +
+            r.versions.map((v, i) => `${i + 1}. ${v.savedAt.slice(0, 19).replace("T", " ")} — ${v.verified}/${v.journeys} verified, ${v.screens} screens`).join("\n") +
+            "\n\nEnter a number (the current graph is archived first, so this is undoable):",
+        );
+        const idx = Number(pick) - 1;
+        if (!(idx >= 0 && idx < r.versions.length)) return;
+        const res = await (await api(`/api/products/${productId}/graph/restore`, {
+          method: "POST", headers: { "content-type": "application/json" },
+          body: JSON.stringify({ version: r.versions[idx].id }),
+        })).json();
+        alert(res.error ? "Could not restore: " + res.error : `Restored ${res.verified}/${res.journeys} verified journeys.`);
+        await loadList(); await render();
+      }
+
+      async function trainingControl(productId, action) {
+        if (action === "cancel" && !confirm("Cancel this training run? Saved checkpoints and the existing approved catalog are retained.")) return;
+        const res = await api(`/api/products/${encodeURIComponent(productId)}/training/${action}`, { method:"POST" });
+        const out = await res.json();
+        if (!res.ok) return void alert(out.error || `${action} failed`);
+        await loadList(); await render();
+      }
+
+      async function submitJourneyReview(d, index, action) {
+        const journey = d.graph.journeys[index];
+        const note = $("reviewNote" + index)?.value.trim() || "";
+        if (action === "rework" && !note) return void alert("Describe exactly what should be corrected or explored.");
+        const verb = action === "approve" ? "Approve this exact machine-verified revision?" : action === "reject" ? "Reject this journey revision?" : "Request targeted rework using this instruction?";
+        if (!confirm(`${verb}\n\n${journey.goal}${note ? `\n\nNote: ${note}` : ""}`)) return;
+        const res = await api(`/api/products/${encodeURIComponent(d.product.id)}/journeys/${encodeURIComponent(journey.id)}/review`, {
+          method:"POST", headers:{"content-type":"application/json"},
+          body: JSON.stringify({ action, comment: action === "rework" ? undefined : note, instruction: action === "rework" ? note : undefined }),
+        });
+        const out = await res.json();
+        if (!res.ok) return void alert(out.error || "review failed");
+        await loadList(); await render();
+      }
+
+      function renderTab(d) {
+        const g = d.graph || { screens: [], journeys: [], capabilities: [], backlog: [] };
+        const b = $("tabBody"); if (!b) return;
+
+        if (tab === "training") {
+          const job = d.job || {};
+          const journeys = g.journeys || [];
+          const live = Object.values(job.journeys || {});
+          const machine = journeys.filter(j => j.machineVerified).length;
+          const approved = journeys.filter(j => j.publishEligible).length;
+          const pending = journeys.filter(j => j.machineVerified && !j.publishEligible && (j.approval?.status || "pending") === "pending").length;
+          const needsWork = journeys.filter(j => !j.machineVerified || ["rejected","rework_requested"].includes(j.approval?.status)).length;
+          const metricRuns = g.trainingMetrics?.runs || [];
+          const latestMetric = metricRuns.slice(-1)[0];
+          const latestBaseline = metricRuns.filter(r=>r.mode==="exploration_only").slice(-1)[0];
+          const latestDocs = metricRuns.filter(r=>r.mode==="documents_plus_ui").slice(-1)[0];
+          b.innerHTML = `
+            <div class="audit-note"><b>Release rule:</b> automated replay must pass first, then a person must approve that exact revision checksum. Editing or re-learning a journey automatically invalidates the old approval. The currently published catalog stays live until a fully approved replacement is published.</div>
+            <div class="cards">
+              <div class="card"><div class="k">Run</div><div class="v" style="font-size:16px">${job.running ? (job.paused ? "Paused" : esc(job.stage || "Running")) : "Stopped"}</div></div>
+              <div class="card"><div class="k">Machine passed</div><div class="v">${machine}</div></div>
+              <div class="card"><div class="k">Awaiting approval</div><div class="v">${pending}</div></div>
+              <div class="card"><div class="k">Approved</div><div class="v">${approved}</div></div>
+              <div class="card"><div class="k">Needs attention</div><div class="v">${needsWork}</div></div>
+            </div>
+            ${latestMetric ? `<div class="panel">
+              <h3>Training efficiency · ${esc(latestMetric.mode.replaceAll("_"," "))}</h3>
+              <p class="h">Recorded outcomes, not model estimates. Run once with document planning disabled and once enabled for a direct before/after comparison.</p>
+              <div class="cards">
+                <div class="card"><div class="k">Doc candidates</div><div class="v">${latestMetric.documentCandidates}</div></div>
+                <div class="card"><div class="k">Doc/UI planned</div><div class="v">${latestMetric.plannedFromDocuments}/${latestMetric.plannedFromUi}</div></div>
+                <div class="card"><div class="k">Steps pre-matched</div><div class="v">${latestMetric.prefilledSteps}</div></div>
+                <div class="card"><div class="k">Machine passed</div><div class="v">${latestMetric.machineVerified}/${latestMetric.explored}</div></div>
+                <div class="card"><div class="k">Proof failures</div><div class="v">${latestMetric.proofFailures}</div></div>
+                <div class="card"><div class="k">Stale docs</div><div class="v">${latestMetric.staleOrUngrounded + latestMetric.documentationStaleFailures}</div></div>
+              </div>
+              ${latestBaseline && latestDocs ? `<div class="step mono">Before/after: machine pass ${latestBaseline.machineVerified}/${latestBaseline.explored} → ${latestDocs.machineVerified}/${latestDocs.explored} · proof failures ${latestBaseline.proofFailures} → ${latestDocs.proofFailures}</div>` : ""}
+            </div>` : ""}
+            <div class="panel">
+              <h3>Live training control</h3>
+              <p class="h">Pause at the next safe checkpoint, resume without losing the saved graph, or cancel the run. Journey-level progress updates arrive live.</p>
+              <div style="display:flex;gap:8px;flex-wrap:wrap">
+                ${job.running && !job.paused ? '<button class="btn" data-traincontrol="pause">Pause</button>' : ''}
+                ${job.running && job.paused ? '<button class="btn go" data-traincontrol="resume">Resume</button>' : ''}
+                ${job.running ? '<button class="btn danger" data-traincontrol="cancel">Cancel run</button>' : ''}
+                <button class="btn" id="teachHere">◉ Teach a missed journey manually</button>
+                <button class="btn" id="auditHere">Open full audit trail</button>
+              </div>
+              ${job.current ? `<div class="progressline" style="margin-top:12px"><b>${esc(job.current.stage)}</b><span>${esc(job.current.message)}</span><span class="pill busy">${job.current.currentStep ? `${job.current.currentStep}/${job.current.totalSteps || "?"}` : esc(job.current.journeyStatus || "live")}</span></div>` : '<div class="empty">No training run is active.</div>'}
+              ${live.length ? live.map(p => `<div class="progressline"><b>${esc(p.journeyGoal || "mapping")}</b><span>${esc(p.message || "")}</span><span class="pill ${p.journeyStatus === "machine_passed" || p.journeyStatus === "awaiting_review" ? "ready" : p.journeyStatus === "failed" ? "fail" : "busy"}">${esc((p.journeyStatus || p.stage || "pending").replaceAll("_"," "))}</span></div>`).join("") : ""}
+              ${job.error ? `<div class="step"><span class="pill fail">last error</span> ${esc(job.error)}</div>` : ""}
+            </div>
+            <div class="panel">
+              <h3>Journey review queue</h3>
+              <p class="h">Inspect the learned actions, proof contract and clean-state replay results. Approve only when they describe the right customer journey. “Rework” sends your instruction back as a targeted mapping job.</p>
+              ${journeys.map((j,i) => {
+                const state = j.publishEligible ? "approved" : j.machineVerified ? (j.approval?.status || "pending") : j.status === "verified" ? "needs re-verification" : (j.status || "failed");
+                const canApprove = j.machineVerified && !j.publishEligible;
+                const checks = (j.verificationRuns || []).slice(-5);
+                const doc = j.documentation;
+                return `<div class="j open">
+                  <div class="head" style="cursor:default">
+                    <span class="pill ${j.publishEligible ? "ready" : j.machineVerified ? "busy" : "fail"}">${esc(state.replaceAll("_"," "))}</span>
+                    <b>${esc(j.goal)}</b>
+                    <span class="mono">revision ${j.revision || 1} · ${esc(String(j.revisionChecksum || "").slice(0,12))}</span>
+                  </div>
+                  <div class="body" style="display:block">
+                    ${j.meaning ? `<div style="margin-bottom:8px">${esc(j.meaning)}</div>` : ""}
+                    ${doc ? `<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:10px;margin:10px 0">
+                      <div class="step"><b>Documentation</b><br><span class="mono">${esc(doc.procedure.citation.title)} › ${esc(doc.procedure.citation.section)} · ¶${doc.procedure.citation.paragraphStart}-${doc.procedure.citation.paragraphEnd}</span><br>${esc(doc.procedure.citation.excerpt)}<br><br>${doc.procedure.steps.map((s,n)=>`${n+1}. ${esc(s)}`).join("<br>")}</div>
+                      <div class="step"><b>App actually did</b><br>${j.steps.map((s,n)=>`<span class="mono">${n+1}. ${esc(s.action)} ${esc(s.target)}</span>`).join("<br>") || "No executable steps"}<br><br><span class="pill ${doc.matchStatus==="full"?"ready":doc.matchStatus==="partial"?"busy":"fail"}">${esc(doc.matchStatus)} wording match</span>${doc.prefilledSteps?` · ${doc.prefilledSteps} pre-matched step(s) executed`:""}</div>
+                      <div class="step"><b>Expected and observed proof</b><br>Document promised: <span class="mono">${esc(doc.procedure.successMessage || "no exact message")}</span><br><br>${checks.length ? checks.map(r=>`${r.ok?"✓":"✗"} ${esc(r.detail)}`).join("<br>") : "No clean-state replay yet"}${doc.staleReasons?.length?`<br><br><span class="pill fail">possible stale documentation</span><br>${doc.staleReasons.map(esc).join("<br>")}`:""}</div>
+                    </div>` : ""}
+                    ${j.steps.map((s,n)=>`<div class="step"><span class="mono">${n+1}. ${esc(s.action)} ${esc(s.target)}${s.value?` = "${esc(s.value)}"`:""}</span>${s.say?`<br><span class="say">🗣 ${esc(s.say)}</span>`:""}</div>`).join("")}
+                    <div class="step"><b>Proof:</b> ${esc(j.evidence?.rationale || j.postcondition || j.proof || "none")}</div>
+                    <div class="step mono"><b>Clean-state replays:</b><br>${checks.length ? checks.map(r=>`${r.ok?"✓":"✗"} ${esc(r.detail)}`).join("<br>") : "No replay evidence recorded"}</div>
+                    ${j.failure ? `<div class="step"><span class="pill fail">${esc(j.failure.category)}</span> ${esc(j.failure.reason)}</div>` : ""}
+                    ${j.approval?.reviewer ? `<div class="step mono">Last review: ${esc(j.approval.status)} by ${esc(j.approval.reviewer)} at ${esc(j.approval.reviewedAt || "")}${j.approval.comment?` — ${esc(j.approval.comment)}`:""}</div>` : ""}
+                    ${j.revisionHistory?.length ? `<details><summary class="mono">${j.revisionHistory.length} prior revision(s)</summary><div class="mono">${j.revisionHistory.slice().reverse().map(r=>`r${r.revision} ${esc(r.checksum.slice(0,12))} · ${esc(r.status)} · ${esc(r.savedAt)}`).join("<br>")}</div></details>` : ""}
+                    <label>Reviewer note or exact correction instruction</label>
+                    <textarea rows="2" id="reviewNote${i}" placeholder="For rework, say exactly what should be explored or corrected."></textarea>
+                    <div style="display:flex;gap:7px;margin-top:8px;flex-wrap:wrap">
+                      <button class="btn go" data-review="approve" data-index="${i}" ${canApprove?"":"disabled"}>Approve exact revision</button>
+                      <button class="btn" data-review="reject" data-index="${i}">Reject</button>
+                      <button class="btn primary" data-review="rework" data-index="${i}">Rework with instruction</button>
+                    </div>
+                  </div>
+                </div>`;
+              }).join("") || '<div class="empty">No journey candidates yet. Start mapping or teach one manually.</div>'}
+            </div>`;
+          for (const el of document.querySelectorAll("[data-traincontrol]")) el.onclick = () => trainingControl(d.product.id, el.dataset.traincontrol);
+          $("teachHere").onclick = () => startTrainer(d.product.id);
+          $("auditHere").onclick = () => { tab = "activity"; renderTab(d); document.querySelectorAll(".tab").forEach(t=>t.classList.toggle("on",t.dataset.tab===tab)); };
+          for (const el of document.querySelectorAll("[data-review]")) el.onclick = () => submitJourneyReview(d, Number(el.dataset.index), el.dataset.review);
+          return;
+        }
+
+        if (tab === "activity") {
+          b.innerHTML = `<div class="panel"><h3>Activity</h3>
+            <p class="h">Every step this platform took for this product — recorded as it happened, grouped into the
+            activity that caused it. Model calls carry their own latency and cost, so a demo can be costed exactly
+            rather than estimated.</p>
+            <div id="evBody"><div class="empty">Loading…</div></div></div>`;
+          loadActivity(d.product.id);
+          return;
+        }
+
+        if (tab === "overview") {
+          b.innerHTML = `
+            <div class="panel"><h3>Capability map</h3><p class="h">How the platform grouped what this product does — derived from the verified journeys, not hand-written.</p>
+              ${g.capabilities.length ? g.capabilities.map(c=>`<div class="step"><b>${esc(c.name)}</b> <span class="pill">${c.flows} flows</span><br><span class="mono">${esc(c.description||"—")}</span></div>`).join("") : '<div class="empty">Nothing yet — run journey mapping.</div>'}
+            </div>
+            <div class="panel"><h3>Screens discovered</h3><p class="h">Reached by following links and clicking SPA navigation. Instance URLs are collapsed (e.g. /item/1 and /item/2 count once).
+              ${g.survey ? `<br>Discovery stopped: <b>${esc(g.survey.stopReason.replaceAll("_", " "))}</b> after ${g.survey.visits}/${g.survey.maxVisits} visits · ${g.survey.frontierRemaining} paths still queued.` : ""}</p>
+              <table><tr><th>Screen</th><th>Type</th><th>Controls</th><th>URL</th></tr>
+              ${g.screens.map(s=>`<tr><td>${esc(s.title)}</td><td><span class="pill">${esc(s.kind||"product")}</span></td><td>${s.controls}</td><td class="mono">${esc(s.url)}</td></tr>`).join("") || '<tr><td colspan="4" class="empty">none</td></tr>'}
+              </table></div>`;
+        }
+
+        if (tab === "journeys") {
+          b.innerHTML = `<div class="panel"><h3>Journeys</h3>
+            <p class="h">Each is an executable program with durable selectors. <b>Verified</b> means it was replayed from a clean state and its proof appeared only afterwards — only these are used in demos. Green lines are what the voice says.</p>
+            ${g.journeys.map((j,i)=>`
+              <div class="j" id="j${i}">
+                <button type="button" class="head" data-j="${i}" aria-expanded="false">
+                  <span class="pill ${j.publishEligible?"ready":"fail"}">${j.publishEligible?"verified":j.status==="verified"?"needs recheck":j.status}</span>
+                  <b>${esc(j.goal)}</b>
+                  <span class="mono">${j.steps.length} steps · ${j.evidence?.kind||j.proof} proof · ${j.verificationRuns?.filter(r=>r.ok).length||0}/${j.verificationRuns?.length||j.attempts||0} replay passes${j.reliability!=null?` · reliability ${j.reliability.toFixed(2)}`:""}</span>
+                </button>
+                <div class="body">
+                  ${j.meaning?`<div style="margin-bottom:9px">${esc(j.meaning)}</div>`:""}
+                  ${j.steps.map((s,n)=>`<div class="step"><span class="mono">${n+1}. ${esc(s.action)} ${esc(s.target)}${s.value?` = "${esc(s.value)}"`:""}</span>${s.say?`<br><span class="say">🗣 ${esc(s.say)}</span>`:""}</div>`).join("")}
+                  <div class="step mono">⇒ contract: ${esc(j.evidence?.rationale||`text appears only after action`)}${j.evidence?.expectedUrl?` · ${esc(j.evidence.expectedUrl)}`:""}${j.postcondition?` · "${esc(j.postcondition)}"`:""}${j.requires?.length?` · requires ${j.requires.length} prior journey`:""}</div>
+                  ${j.failure?`<div class="step"><span class="pill fail">${esc(j.failure.category)}</span> <b>${esc(j.failure.stage)}</b> · ${esc(j.failure.reason)}${j.failure.failedStep!=null?` · step ${j.failure.failedStep+1}`:""}${j.failure.afterUrl?`<br><span class="mono">ended at ${esc(j.failure.afterUrl)}</span>`:""}</div>`:""}
+                  ${j.verificationRuns?.length?`<div class="step mono">latest replays: ${j.verificationRuns.slice(-5).map(r=>`${r.ok?"✓":"✗"} ${esc(r.detail)}`).join("<br>")}</div>`:""}
+                </div>
+              </div>`).join("") || '<div class="empty">No journeys yet.</div>'}
+            ${g.backlog?.filter(x=>x.status!=="done").length?`<div style="margin-top:12px"><h3>Could not learn</h3>${g.backlog.filter(x=>x.status!=="done").map(x=>`<div class="step"><b>${esc(x.goal)}</b>${x.failure?`<br><span class="pill fail">${esc(x.failure.category)}</span> ${esc(x.failure.reason)}`:"<br><span class=\"mono\">pending</span>"}</div>`).join("")}</div>`:""}
+            </div>`;
+          for (const el of document.querySelectorAll(".head")) el.onclick = () => { const j = $("j"+el.dataset.j); j.classList.toggle("open"); el.setAttribute("aria-expanded", j.classList.contains("open")); };
+        }
+
+        if (tab === "documents") {
+          b.innerHTML = `
+            <div class="panel"><h3>Add knowledge</h3>
+              <p class="h">All optional — but docs are what stop it guessing. Anything missing here becomes “I'm not certain”. Added knowledge is indexed immediately.</p>
+              <label>Paste text (help centre, features, FAQs)</label><textarea id="dText" rows="4"></textarea>
+              <div class="row">
+                <div><label>Upload .md / .txt</label><input type="file" id="dFiles" multiple accept=".md,.txt,.markdown" /></div>
+                <div><label>Doc URLs to crawl</label><textarea id="dUrls" rows="2" placeholder="https://docs.example.com/  —  comma or newline separated"></textarea>
+                  <label style="display:flex;align-items:flex-start;gap:8px;margin-top:8px;font-weight:400">
+                    <input type="checkbox" id="dExpand" style="width:auto;margin-top:3px" />
+                    <span>Read all docs under this URL<br><span class="sub">Finds every page linked beneath it — the whole left-hand menu — and indexes them all.</span></span>
+                  </label></div>
+              </div>
+              <button class="btn go" id="dAdd" style="margin-top:12px">Add knowledge</button>
+              <span class="sub" id="dMsg" style="margin-left:10px"></span>
+            </div>
+            <div class="panel"><h3>Stored documents</h3>
+              <p class="h">${d.knowledge.docChunks} chunk(s), ${d.knowledge.embedded} with a semantic index · ${d.knowledge.structuredSections || 0} preserved section(s) · ${d.knowledge.documentedProcedures || 0} procedure candidate(s).</p>
+              <table><tr><th>File</th><th>Kind</th><th>Size</th></tr>
+              ${d.knowledge.files.map(f=>`<tr><td>${esc(f.name)}</td><td>${esc(f.kind)}</td><td>${f.bytes} B</td></tr>`).join("") || '<tr><td colspan="3" class="empty">none</td></tr>'}
+              </table>
+              ${d.knowledge.sources.length?`<p class="h" style="margin-top:10px">Crawled URLs: ${d.knowledge.sources.map(u=>esc(u)).join(", ")}</p>`:""}
+            </div>
+            <div class="panel"><h3>Indexed chunks (what answers come from)</h3>
+              ${d.knowledge.chunks.map(c=>`<div class="step"><b>${esc(c.title)}</b> <span class="pill">${esc(c.trust)}</span><br><span class="mono">${esc(c.preview)}…</span></div>`).join("") || '<div class="empty">none</div>'}
+            </div>`;
+          $("dAdd").onclick = async () => {
+            const files = [];
+            const t = $("dText").value.trim();
+            if (t) files.push({ name: "pasted-notes", text: t });
+            for (const f of $("dFiles").files || []) files.push({ name: f.name, text: await f.text() });
+            // NB: /[\n,]/ with ONE backslash. This previously read split("\\n"),
+            // which splits on the literal two-character sequence backslash-n, so
+            // "one per line" never actually worked — a multi-line paste arrived
+            // as a single malformed URL.
+            const sources = $("dUrls").value.split(/[\n,]/).map(s=>s.trim()).filter(Boolean);
+            const expand = !!$("dExpand")?.checked;
+            if (!files.length && !sources.length) return void ($("dMsg").textContent = "nothing to add");
+            $("dMsg").textContent = expand ? "finding every page under those URLs…" : "indexing…"; $("dAdd").disabled = true;
+            const r = await (await api(`/api/products/${selected}/docs`, { method:"POST", headers:{"content-type":"application/json"}, body: JSON.stringify({ files, sources, expand }) })).json();
+            const warn = (r.expanded || []).find(e => e.warning);
+            $("dMsg").textContent = !r.ok ? "failed"
+              : warn ? `✓ ${r.docChunks} chunks — ${warn.warning}`
+              : `✓ ${r.docChunks} chunks indexed from ${r.sourcesAdded} URL(s)`;
+            $("dAdd").disabled = false; await render();
+          };
+        }
+
+        if (tab === "learning") {
+          b.innerHTML = `<div class="panel"><h3>What it learned from real demos</h3>
+            <p class="h">Unanswered questions become the mapping curriculum — the next run prioritises what prospects actually asked for.</p>
+            <div class="cards">
+              <div class="card"><div class="k">Sessions</div><div class="v">${d.learning.sessions}</div></div>
+              <div class="card"><div class="k">Engaged</div><div class="v">${d.learning.engaged}</div></div>
+              <div class="card"><div class="k">Knowledge gaps</div><div class="v">${d.learning.kbGaps.length}</div></div>
+            </div>
+            <h3 style="font-size:13px">Questions it could not answer</h3>
+            ${d.learning.kbGaps.length ? d.learning.kbGaps.map(q=>`<div class="step mono">${esc(q)}</div>`).join("") : '<div class="empty">none yet</div>'}
+            ${d.learning.topFlows.length?`<h3 style="font-size:13px;margin-top:14px">Most demonstrated</h3>${d.learning.topFlows.map(([f,n])=>`<div class="step mono">${esc(f)} × ${n}</div>`).join("")}`:""}
+            </div>`;
+        }
+      }
+
+      // ================= Human journey demonstration =================
+      let trWs = null, trDemoId = null, trProductId = null;
+      function trSend(value) { if (trWs?.readyState === 1) trWs.send(JSON.stringify(value)); }
+      function trLine(text) {
+        const log = $("trLog");
+        log.textContent += `\n${text}`;
+        log.scrollTop = log.scrollHeight;
+      }
+      async function startTrainer(productId) {
+        const res = await api(`/api/products/${encodeURIComponent(productId)}/demonstrate`, { method:"POST" });
+        const out = await res.json();
+        if (!res.ok) return void alert(out.error || "Could not start the teaching window");
+        trDemoId = out.demoId; trProductId = productId;
+        $("trUrl").textContent = out.url; $("trGoal").value = ""; $("trCapability").value = "";
+        $("trProof").innerHTML = '<option value="">Detect the strongest proof</option>';
+        $("trLog").textContent = "Recording ready — complete one journey in the product window.";
+        $("trainer").classList.add("open");
+        const proto = location.protocol === "https:" ? "wss" : "ws";
+        trWs = new WebSocket(`${proto}://${location.host}/ws/demo?demoId=${encodeURIComponent(trDemoId)}`);
+        trWs.onmessage = (event) => {
+          const m = JSON.parse(event.data);
+          if (m.type === "frame") $("trScreen").src = "data:image/jpeg;base64," + m.data;
+          else if (m.type === "ready" || m.type === "url") $("trUrl").textContent = m.url;
+          else if (m.type === "step") trLine(`${m.recorded ? "✓" : "·"} ${m.label}`);
+          else if (m.type === "warn" || m.type === "error") trLine(`⚠ ${m.text}`);
+          else if (m.type === "proofs") {
+            $("trProof").innerHTML = '<option value="">Detect the strongest proof</option>' + (m.options || []).map(x=>`<option value="${esc(x)}">${esc(x)}</option>`).join("");
+          }
+        };
+        trWs.onopen = () => setTimeout(() => $("trKeys").focus(), 50);
+      }
+      async function closeTrainer(cancel) {
+        const id = trDemoId;
+        try { trWs?.close(); } catch {}
+        trWs = null; trDemoId = null; trProductId = null;
+        $("trainer").classList.remove("open"); $("trScreen").src = "";
+        if (cancel && id) await api(`/api/demo/${encodeURIComponent(id)}/cancel`, { method:"POST" }).catch(()=>{});
+      }
+      $("trCancel").onclick = () => closeTrainer(true);
+      $("trKeys").addEventListener("click", (e) => {
+        const r = $("trKeys").getBoundingClientRect();
+        trSend({ type:"click", x:(e.clientX-r.left)/r.width, y:(e.clientY-r.top)/r.height });
+      });
+      $("trainer").addEventListener("wheel", (e) => trSend({ type:"wheel", dy:e.deltaY }), { passive:true });
+      $("trKeys").addEventListener("keydown", (e) => {
+        if (["Control","Meta","Alt","Shift","CapsLock"].includes(e.key)) return;
+        if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "v") return;
+        e.preventDefault();
+        const modifiers = [];
+        if (e.ctrlKey) modifiers.push("Control"); if (e.metaKey) modifiers.push("Meta"); if (e.altKey) modifiers.push("Alt");
+        if (e.shiftKey && e.key.length > 1) modifiers.push("Shift");
+        trSend({ type:"key", key:e.key, text:!modifiers.length && e.key.length===1 ? e.key : "", modifiers });
+      });
+      $("trKeys").addEventListener("paste", (e) => {
+        const text = (e.clipboardData || window.clipboardData)?.getData("text") || "";
+        if (text) { e.preventDefault(); trSend({ type:"paste", text }); }
+      });
+      $("trKeys").addEventListener("input", () => { $("trKeys").value = ""; });
+      $("trFinish").onclick = async () => {
+        const goal = $("trGoal").value.trim();
+        if (!goal) return void alert("Give the journey a clear goal first.");
+        const btn = $("trFinish"); btn.disabled = true; trLine("Observing proof and replaying from a clean state…");
+        const proofResult = await (await api(`/api/demo/${encodeURIComponent(trDemoId)}/proofs`)).json().catch(()=>({ options:[] }));
+        if (proofResult.options?.length && $("trProof").options.length <= 1) {
+          $("trProof").innerHTML = proofResult.options.map((x,i)=>`<option value="${esc(x)}" ${i===0?"selected":""}>${esc(x)}</option>`).join("");
+        }
+        const res = await api(`/api/demo/${encodeURIComponent(trDemoId)}/finish`, {
+          method:"POST", headers:{"content-type":"application/json"}, body:JSON.stringify({
+            goal, capability:$("trCapability").value.trim() || undefined,
+            postcondition:$("trProof").value || undefined, publish:true,
+          }),
+        });
+        const out = await res.json(); btn.disabled = false;
+        if (!res.ok || !out.ok) return void trLine(`✗ ${out.detail || out.error || "Replay failed"}`);
+        trLine(`✓ ${out.detail}`);
+        await closeTrainer(false); tab = "training"; await loadList(); await render();
+      };
+
+      // ================= Interactive sign-in =================
+      let siWs = null, siAuthId = null, siProduct = null;
+
+      /*
+       * ---- Desktop-Chrome sign-in ------------------------------------------
+       * Nothing is streamed here: the window lives on the user's own desktop.
+       * All this panel does is track whether Chrome is still open and then ask
+       * the server to verify + adopt the profile.
+       */
+      let dskProduct = null;
+
+      async function startDesktopSignIn(productId, signInUrl) {
+        dskProduct = productId;
+        $("dskLog").style.display = "none";
+        $("dskLog").textContent = "";
+        $("dskWho").textContent = signInUrl || "";
+        $("dskState").textContent = "opening…";
+        $("dskDone").disabled = true;
+        $("dsk").classList.add("open");
+        const r = await (await api(`/api/products/${productId}/auth/desktop`, {
+          method:"POST", headers:{"content-type":"application/json"},
+          body: JSON.stringify({ signInUrl: signInUrl || undefined }),
+        })).json();
+        if (r.error) {
+          $("dsk").classList.remove("open");
+          return void alert("Could not open Chrome: " + r.error);
+        }
+        $("dskWho").textContent = `${r.browser} → ${r.url}`;
+        clearInterval(window.__dskPoll);
+        window.__dskPoll = setInterval(dskRefresh, 1500);
+        dskRefresh();
+      }
+
+      async function dskRefresh() {
+        if (!dskProduct) return;
+        const st = await (await api(`/api/products/${dskProduct}/auth/desktop`)).json().catch(() => null);
+        if (!st) return;
+        const el = $("dskState");
+        el.textContent = st.windowOpen ? "open — sign in there, leave the dashboard open, then come back" : "closed — reopen Chrome before granting access";
+        el.classList.toggle("live", !!st.windowOpen);
+        $("dskDone").disabled = !st.windowOpen;
+      }
+
+      function closeDsk() {
+        clearInterval(window.__dskPoll);
+        $("dsk").classList.remove("open");
+      }
+
+      $("dskCancel").onclick = async () => {
+        const id = dskProduct;
+        closeDsk();
+        if (id) await api(`/api/products/${id}/auth/desktop/cancel`, { method:"POST" }).catch(() => {});
+        await loadList();
+        if (id) await select(id);
+      };
+
+      $("dskReopen").onclick = () => dskProduct && startDesktopSignIn(dskProduct, $("dskWho").textContent.split(" → ").pop());
+
+      $("dskDone").onclick = async () => {
+        if (!dskProduct) return;
+        const id = dskProduct;
+        const btn = $("dskDone"); btn.disabled = true;
+        const log = $("dskLog"); log.style.display = ""; log.textContent = "Copying the live sign-in and proving it works inside the training browser…";
+        const res = await api(`/api/products/${id}/auth/desktop/done`, {
+          method:"POST", headers:{"content-type":"application/json"},
+          body: JSON.stringify({ useCurrentUrlAsStart: true }),
+        });
+        const r = await res.json();
+        btn.disabled = false;
+        if (!r.ok) {
+          // Do NOT close the panel: they need to go back into the same window.
+          log.textContent = `Not signed in yet.\n${r.error || ""}\n${r.hint || ""}`.trim();
+          dskRefresh();
+          return;
+        }
+        log.textContent = `Signed in. ${r.cookieCount} cookie(s) across ${r.origins.length} origin(s).\nLanded on ${r.url}\nStarting journey mapping…`;
+        const mappingResponse = await api(`/api/products/${id}/onboard`, {
+          method:"POST", headers:{"content-type":"application/json"},
+          body: JSON.stringify({}),
+        });
+        const mapping = await mappingResponse.json();
+        if (!mappingResponse.ok) {
+          log.textContent += `\nAccess was captured, but training did not start: ${mapping.error || "access check failed"}`;
+          return;
+        }
+        closeDsk();
+        await loadList();
+        await select(id);
+      };
+
+      async function startSignIn(productId, loginUrl) {
+        siProduct = productId;
+        const r = await (await api(`/api/products/${productId}/auth/start`, {
+          method:"POST", headers:{"content-type":"application/json"},
+          body: JSON.stringify({ loginUrl: loginUrl || undefined }),
+        })).json();
+        if (r.error) return void alert("Could not open a sign-in window: " + r.error);
+        siAuthId = r.authSessionId;
+        $("siUrl").textContent = r.url;
+        $("signin").classList.add("open");
+        setTimeout(() => { siFocusKbd(); siKbdState(); }, 60); // live the moment it opens
+        clearInterval(window.__siKbdPoll);
+        window.__siKbdPoll = setInterval(siKbdState, 700); // never let the chip drift
+
+        const proto = location.protocol === "https:" ? "wss" : "ws";
+        siWs = new WebSocket(`${proto}://${location.host}/ws/auth?authSessionId=${siAuthId}`);
+        siWs.onmessage = (ev) => {
+          const m = JSON.parse(ev.data);
+          if (m.type === "frame") $("siScreen").src = "data:image/jpeg;base64," + m.data;
+          else if (m.type === "url" || m.type === "ready") $("siUrl").textContent = m.url;
+          else if (m.type === "focus") siKbdState(undefined, m.focused);
+          else if (m.type === "error") alert(m.text);
+        };
+        siWs.onopen = () => { siFocusKbd(); siKbdState(); };
+        // Poll the URL so the user can see where the redirects landed them.
+        clearInterval(window.__siPoll);
+        window.__siPoll = setInterval(() => siWs?.readyState === 1 && siWs.send(JSON.stringify({ type:"where" })), 2500);
+      }
+
+      function siSend(o) { if (siWs && siWs.readyState === 1) siWs.send(JSON.stringify(o)); }
+
+      /*
+       * Keyboard capture.
+       *
+       * A window-level keydown listener looked right but keys never reached the
+       * product: whether it fires depends on what the ADMIN page happens to have
+       * focused, and the user has no way to see that. Fixed by making the stage a
+       * real focusable element, focusing it whenever the window opens or is
+       * clicked, and showing whether the keyboard is connected and what has focus
+       * in the remote page. Explicit beats implicit.
+       */
+      const siStage = $("siStage");
+      const siKeys = $("siKeys");
+
+      function siFocusKbd() { try { siKeys.focus({ preventScroll: true }); } catch (e) {} }
+      const siHasKbd = () => document.activeElement === siKeys;
+      let siRemoteFocus = "";
+      /**
+       * Reports the truth: keys only flow when THIS page has the input control
+       * focused. The previous chip echoed the server's view of the remote page, so
+       * it showed "typing into …" while the browser was sending nothing at all.
+       */
+      function siKbdState(_on, focusedText) {
+        if (focusedText !== undefined) siRemoteFocus = focusedText || "";
+        const live = siHasKbd();
+        const el = $("siKbd");
+        el.classList.toggle("live", live);
+        el.textContent = live
+          ? (siRemoteFocus ? `⌨ connected — typing into ${siRemoteFocus}` : "⌨ keyboard connected")
+          : "⌨ click the window to connect your keyboard";
+      }
+      siKeys.addEventListener("focus", () => siKbdState(true));
+      siKeys.addEventListener("blur", () => siKbdState(false));
+
+      // Clicks land on the transparent textarea, which focuses it naturally; its
+      // rect matches the image exactly because it overlays it.
+      siKeys.addEventListener("click", (e) => {
+        const r = siKeys.getBoundingClientRect();
+        siSend({ type:"click", x:(e.clientX-r.left)/r.width, y:(e.clientY-r.top)/r.height });
+      });
+      $("signin").addEventListener("wheel", (e) => siSend({ type:"wheel", dy:e.deltaY }), { passive:true });
+      // Clicking chrome around the stream shouldn't leave the keyboard disconnected.
+      $("signin").addEventListener("mouseup", () => { if (!siHasKbd()) { siFocusKbd(); siKbdState(); } });
+
+      siKeys.addEventListener("keydown", (e) => {
+        siKbdState(); // keep the indicator honest on every keystroke
+        if (["Control","Meta","Alt","Shift","CapsLock"].includes(e.key)) return; // modifiers alone do nothing
+        const mods = [];
+        if (e.ctrlKey) mods.push("Control");
+        if (e.metaKey) mods.push("Meta");
+        if (e.altKey) mods.push("Alt");
+        if (e.shiftKey && e.key.length > 1) mods.push("Shift"); // shift is implicit in a typed char
+        // Let the browser's own paste fire; we forward it in the paste handler.
+        if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "v") return;
+        e.preventDefault();
+        siSend({ type:"key", key:e.key, text: !mods.length && e.key.length === 1 ? e.key : "", modifiers: mods });
+      });
+
+      // Never let text accumulate in the hidden control.
+      siKeys.addEventListener("input", () => { siKeys.value = ""; });
+
+      // Pasting matters: password managers paste, and long strings type unreliably.
+      siKeys.addEventListener("paste", (e) => {
+        const text = (e.clipboardData || window.clipboardData)?.getData("text") ?? "";
+        if (!text) return;
+        e.preventDefault();
+        siSend({ type:"paste", text });
+      });
+
+      $("siWhere").onclick = () => siSend({ type:"where" });
+      $("siCancel").onclick = async () => { await closeSignIn(true); };
+      $("siDone").onclick = async () => {
+        const st = await (await api(`/api/auth/${siAuthId}/status`)).json();
+        const where = st.url || "(unknown)";
+        const hosts = (st.origins || []).join(", ") || "none detected";
+        if (!st.looksSignedIn && !confirm(`A password field is still visible.\n\nGrant access anyway?`)) return;
+        if (!confirm(`Grant this platform access to:\n\n${where}\n\nSession covers: ${hosts}\n\nUse this URL as the demo starting point?`)) return;
+        const r = await (await api(`/api/auth/${siAuthId}/capture`, {
+          method:"POST", headers:{"content-type":"application/json"}, body: JSON.stringify({ useCurrentUrlAsStart:true }),
+        })).json();
+        if (r.error) return void alert("Capture failed: " + r.error);
+        await closeSignIn(false);
+        await loadList(); await select(r.product);
+        const startNow = confirm(
+          `✓ Access granted — ${r.cookieCount} cookie(s), covering ${r.origins.join(", ")}.\n` +
+          `Demo will start at: ${r.startUrl}\n\nStart journey mapping now?`);
+        if (startNow) {
+          await api(`/api/products/${r.product}/onboard`, {
+            method:"POST", headers:{"content-type":"application/json"}, body: JSON.stringify({}),
+          });
+          await loadList(); await render();
+        }
+      };
+
+      async function closeSignIn(cancel) {
+        clearInterval(window.__siPoll);
+        clearInterval(window.__siKbdPoll);
+        if (cancel && siAuthId) await api(`/api/auth/${siAuthId}/cancel`, { method:"POST" }).catch(()=>{});
+        try { siWs?.close(); } catch (e) {}
+        siWs = null; siAuthId = null;
+        $("signin").classList.remove("open");
+        $("siScreen").src = "";
+      }
+
+      function intro() {
+        return `<div class="panel"><h3>Link a product</h3>
+          <p class="h">Give a URL and (if it needs one) a demo account. The platform checks it can get in, maps the journeys on its own, verifies each by replaying it, writes the spoken narration, and stores everything — then you can demo it.</p>
+          <div class="row"><div><label>Product name</label><input id="nName" placeholder="Acme CRM" /></div>
+            <div><label>Start URL</label><input id="nUrl" placeholder="https://app.acme.com" /></div></div>
+          <label>How do you sign in to it?</label>
+          <div class="segs" id="nAuth">
+            <button type="button" class="seg on" data-auth="none">No sign-in needed</button>
+            <button type="button" class="seg" data-auth="login">Username + password</button>
+            <button type="button" class="seg" data-auth="profile">I'll sign in myself (Google / SSO / 2FA)</button>
+          </div>
+          <div id="nCreds" style="display:none">
+            <div class="row"><div><label>Demo account username</label><input id="nUser" placeholder="user@example.com" /></div>
+              <div><label>Password</label><input id="nPass" type="password" /></div></div>
+          </div>
+          <div id="nLabelWrap" style="display:none">
+            <label>Account label — optional, for your records only</label>
+            <input id="nLabel" placeholder="e.g. avi@company.com — shown in this console, never used to sign in" />
+          </div>
+          <div id="nSsoNote" class="ssoNote" style="display:none">
+            After you press the button below, a browser window opens here showing the product's sign-in page.
+            <b>You</b> sign in — including “Continue with Google”, SSO and 2FA. Your password goes straight to the
+            product and never touches this platform. When you're in, you grant access and journey mapping starts.
+          </div>
+          <div class="row"><div><label>Allowed risky actions (sandbox only)</label><input id="nAllow" placeholder="e.g. checkout, buy — empty blocks all" /></div>
+            <div><label>Voice</label><select id="nVoice"><option value="">default (anushka)</option><option>abhilash</option><option>manisha</option><option>anushka</option></select></div></div>
+          <label>Product docs — paste anything (optional)</label><textarea id="nDocs" rows="3"></textarea>
+          <div class="row"><div><label>Upload docs</label><input type="file" id="nFiles" multiple accept=".md,.txt,.markdown" /></div>
+            <div><label>Doc URLs to crawl</label><textarea id="nUrls" rows="2" placeholder="https://docs.example.com/  —  comma or newline separated"></textarea>
+              <label style="display:flex;align-items:flex-start;gap:8px;margin-top:8px;font-weight:400">
+                <input type="checkbox" id="nExpand" style="width:auto;margin-top:3px" />
+                <span>Read all docs under this URL<br><span class="sub">Finds every page linked beneath it — the whole left-hand menu — and indexes them all.</span></span>
+              </label></div></div>
+          <button class="btn go" id="nGo" style="margin-top:14px">Link &amp; start journey mapping</button>
+          <div class="log" id="nLog" style="margin-top:12px;display:none"></div>
+        </div>`;
+      }
+
+      function wireIntro() {
+        const go = $("nGo"); if (!go) return;
+
+        // Sign-in method drives which fields show and what the button does.
+        let authMode = "none";
+        for (const b of document.querySelectorAll("#nAuth .seg")) {
+          b.onclick = () => {
+            authMode = b.dataset.auth;
+            document.querySelectorAll("#nAuth .seg").forEach((x) => x.classList.toggle("on", x === b));
+            $("nCreds").style.display = authMode === "login" ? "" : "none";
+            $("nSsoNote").style.display = authMode === "profile" ? "" : "none";
+            $("nLabelWrap").style.display = authMode === "profile" ? "" : "none";
+            go.textContent = authMode === "profile" ? "Link & sign in →" : "Link & start journey mapping";
+          };
+        }
+        go.onclick = async () => {
+          const log = $("nLog"); log.style.display = "block";
+          const name = $("nName").value.trim(), url = $("nUrl").value.trim();
+          if (!name || !url) return void (log.textContent = "Name and start URL are required.");
+          go.disabled = true; log.textContent = "Checking access…";
+          const voice = $("nVoice").value;
+          const r = await (await api("/api/products", { method:"POST", headers:{"content-type":"application/json"},
+            body: JSON.stringify({ name, startUrl: url,
+              // Only send credentials when that's actually the chosen method — a
+              // stray username used to flip the product into form-login mode.
+              username: authMode === "login" ? ($("nUser").value.trim() || undefined) : undefined,
+              password: authMode === "login" ? ($("nPass").value || undefined) : undefined,
+              accountLabel: $("nLabel")?.value.trim() || undefined,
+              allowActions: $("nAllow").value.split(",").map(s=>s.trim()).filter(Boolean),
+              // Don't preflight an SSO product yet — it will obviously show a login page.
+              skipPreflight: authMode === "profile",
+              autoMap: false }) })).json();
+          if (r.error) { log.textContent = "Failed: " + r.error; go.disabled = false; return; }
+          const id = r.product.id;
+          log.textContent = r.preflight ? ((r.preflight.ok ? "✓ " : "✗ ") + r.preflight.message) : "✓ registered";
+          if (voice) await api(`/api/products/${id}/voice`, { method:"POST", headers:{"content-type":"application/json"}, body: JSON.stringify({ speaker: voice }) }).catch(()=>{});
+
+          // knowledge first — the planner writes better jobs when docs exist
+          const files = [];
+          const t = $("nDocs").value.trim(); if (t) files.push({ name:"pasted-notes", text:t });
+          for (const f of $("nFiles").files || []) files.push({ name:f.name, text: await f.text() });
+          // Accept comma OR newline separators — pasting a comma-separated list
+          // is the natural thing to do and used to become one malformed URL.
+          const sources = $("nUrls").value.split(/[\n,]/).map(s=>s.trim()).filter(Boolean);
+          const expand = !!$("nExpand")?.checked;
+          if (files.length || sources.length) {
+            log.textContent += expand ? "\nFinding every page under those URLs…" : "\nIndexing knowledge…";
+            const k = await (await api(`/api/products/${id}/docs`, { method:"POST", headers:{"content-type":"application/json"}, body: JSON.stringify({ files, sources, expand }) })).json();
+            for (const e of k.expanded || []) {
+              log.textContent += `\n  ${e.seed} → ${e.urls.length} page(s) via ${e.method}`;
+              if (e.warning) log.textContent += `\n  ! ${e.warning}`;
+            }
+            log.textContent += `\nIndexed ${k.docChunks ?? 0} chunk(s) from ${k.sourcesAdded ?? 0} URL(s).`;
+          }
+          // SSO: hand off to real Chrome. Mapping starts once access is granted.
+          if (authMode === "profile") {
+            log.textContent += "\nOpening your Chrome at the product's sign-in page…";
+            await loadList();
+            await startDesktopSignIn(id, url);
+            return;
+          }
+          if (!r.preflight.ok) {
+            log.textContent += "\n\nCouldn't get in. If this product uses Google/SSO, choose “I'll sign in myself” — or select it below and press “Sign in with Chrome”.";
+            await loadList(); await select(id); return;
+          }
+          log.textContent += "\nStarting journey mapping…";
+          await api(`/api/products/${id}/onboard`, { method:"POST", headers:{"content-type":"application/json"}, body: JSON.stringify({}) });
+          await loadList(); await select(id);
+        };
+      }
+
+      $("newBtn").onclick = async () => { selected = null; await loadList(); $("detail").innerHTML = intro(); wireIntro(); };
+      $("refresh").onclick = async () => { await loadList(); await render(); };
+
+      (async () => {
+        await loadList();
+        if (products.length) await select(products[0].id);
+        else { $("detail").innerHTML = intro(); wireIntro(); }
+      })();
+    </script>
+  </body>
+</html>

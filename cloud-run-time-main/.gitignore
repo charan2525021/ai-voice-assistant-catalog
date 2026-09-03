@@ -1,0 +1,22 @@
+node_modules/
+dist/
+.venv/
+.env
+.DS_Store
+__pycache__/
+*.py[cod]
+data/*.generated.json
+data/*.events.ndjson
+data/*.continuity.json
+data/tts/
+# Client catalog secrets: installation credentials + private signing material.
+# The runtime database and secrets live under data/*.generated.json (ignored
+# above); this guards any secret that is written under client-catalogs/.
+client-catalogs/**/*-secrets.generated.json
+client-catalogs/**/*.key
+client-catalogs/**/*.pem
+sample-app/public/sable*.js
+sample-app/public/*.generated.json
+vendor/*.tgz
+llm-api-v4/graph-versions/
+coverage/

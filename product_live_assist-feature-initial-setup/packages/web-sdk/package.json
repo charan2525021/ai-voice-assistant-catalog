@@ -1,0 +1,41 @@
+{
+  "name": "@sable/web-sdk",
+  "version": "0.1.0",
+  "description": "Browser-resident runtime for Sable product guidance and safe journey execution",
+  "type": "module",
+  "sideEffects": false,
+  "files": [
+    "dist"
+  ],
+  "main": "./dist/index.js",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./browser": "./dist/sable.min.js"
+  },
+  "scripts": {
+    "clean": "rm -rf dist",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "build:module": "tsc -p tsconfig.build.json",
+    "build:browser": "esbuild src/browser-entry.ts --bundle --minify --format=iife --global-name=Sable --target=es2020 --outfile=dist/sable.min.js",
+    "build": "npm run clean && npm run build:module && npm run build:browser",
+    "test": "node --import tsx --test test/*.test.ts"
+  },
+  "dependencies": {
+    "@sable/sdk-contracts": "0.1.0",
+    "@sable/workflow-core": "0.1.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.7.0",
+    "esbuild": "^0.25.0",
+    "tsx": "^4.19.0",
+    "typescript": "^5.6.0"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

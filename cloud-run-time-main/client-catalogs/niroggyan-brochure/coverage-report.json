@@ -1,0 +1,77 @@
+{
+  "generatedAt": "2026-08-20T00:00:00.000Z",
+  "client": "niroggyan-brochure",
+  "origin": "https://www.brochure.niroggyan.com",
+  "catalogVersionId": "niroggyan-brochure-v1",
+  "applicationBuild": "brochure-main-847efae8",
+  "routes": {
+    "totalDefined": 12,
+    "uiReachable": [
+      "/",
+      "/user-journey",
+      "/smartReporting",
+      "/smartReport",
+      "/vizApp",
+      "/engagement",
+      "/testimonials",
+      "/roi-calculator"
+    ],
+    "directOnlyLegacy": [
+      "/smartReports",
+      "/vizappPage",
+      "/analytics",
+      "/healthTools"
+    ],
+    "acceptedCaseAlias": "/vizapp resolves to the /vizApp route in the current React Router configuration"
+  },
+  "screens": {
+    "total": 12
+  },
+  "controls": {
+    "total": 23,
+    "direct": 20,
+    "blockedWithoutStableLocator": [
+      "home-nav-smart-reporting",
+      "home-panel-smart-reports",
+      "hubspot-scheduling-frame"
+    ]
+  },
+  "journeys": {
+    "total": 14,
+    "approved": [
+      "show-brochure-overview",
+      "open-demo-scheduling-dialog",
+      "close-demo-scheduling-dialog",
+      "open-viz-app-from-user-journey",
+      "open-engagement-from-user-journey",
+      "open-whatsapp-chatbot-preview",
+      "close-whatsapp-chatbot-preview",
+      "run-sample-roi-calculation",
+      "reveal-testimonial-statistics",
+      "show-smart-reporting-overview"
+    ],
+    "verifiedNonApproved": [
+      "open-smart-report-from-repeated-button",
+      "open-external-viz-demo",
+      "open-external-corporate-dashboard",
+      "open-external-consumer-analyzer"
+    ]
+  },
+  "authentication": {
+    "requiredForBrochure": false,
+    "note": "All 12 brochure routes loaded publicly. External dashboard authentication is outside this origin and catalog."
+  },
+  "externalSurfacesNotCataloged": [
+    "demo-vizapp.niroggyan.com",
+    "demo-corporate-dashboard.niroggyan.com",
+    "niro.health",
+    "HubSpot scheduling internals",
+    "configuration portal",
+    "pricing surface"
+  ],
+  "coverageHonesty": "The brochure is strong for product narrative, static report previews, a WhatsApp preview, and ROI scenario demonstration. It cannot demonstrate the founder's full authenticated dashboards, configuration workflow, consumer analysis, or pricing journey.",
+  "brokenLinks": 0,
+  "brokenControls": 0,
+  "knowledgeChunks": 12,
+  "privacyRules": 10
+}

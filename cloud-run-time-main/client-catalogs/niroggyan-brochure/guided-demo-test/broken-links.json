@@ -1,0 +1,149 @@
+{
+  "generatedAt": "2026-08-25T00:00:00.000Z",
+  "sourcePage": "https://www.brochure.niroggyan.com/",
+  "applicationBuild": "brochure-main-847efae8",
+  "method": "Correct 1440x900 viewport DOM/accessibility exploration, deployed source-map inspection, native interaction replay, and HTTP GET reachability.",
+  "brokenLinks": [],
+  "brokenControls": [],
+  "linkChecks": [
+    {
+      "url": "https://www.brochure.niroggyan.com/",
+      "status": 200,
+      "checkedAt": "2026-08-25T00:00:00.000Z"
+    },
+    {
+      "url": "https://www.brochure.niroggyan.com/user-journey",
+      "status": 200,
+      "checkedAt": "2026-08-25T00:00:00.000Z"
+    },
+    {
+      "url": "https://www.brochure.niroggyan.com/smartReporting",
+      "status": 200,
+      "checkedAt": "2026-08-25T00:00:00.000Z"
+    },
+    {
+      "url": "https://www.brochure.niroggyan.com/smartReport",
+      "status": 200,
+      "checkedAt": "2026-08-25T00:00:00.000Z"
+    },
+    {
+      "url": "https://www.brochure.niroggyan.com/vizApp",
+      "status": 200,
+      "checkedAt": "2026-08-25T00:00:00.000Z"
+    },
+    {
+      "url": "https://www.brochure.niroggyan.com/smartReports",
+      "status": 200,
+      "checkedAt": "2026-08-25T00:00:00.000Z"
+    },
+    {
+      "url": "https://www.brochure.niroggyan.com/vizappPage",
+      "status": 200,
+      "checkedAt": "2026-08-25T00:00:00.000Z"
+    },
+    {
+      "url": "https://www.brochure.niroggyan.com/analytics",
+      "status": 200,
+      "checkedAt": "2026-08-25T00:00:00.000Z"
+    },
+    {
+      "url": "https://www.brochure.niroggyan.com/healthTools",
+      "status": 200,
+      "checkedAt": "2026-08-25T00:00:00.000Z"
+    },
+    {
+      "url": "https://www.brochure.niroggyan.com/engagement",
+      "status": 200,
+      "checkedAt": "2026-08-25T00:00:00.000Z"
+    },
+    {
+      "url": "https://www.brochure.niroggyan.com/testimonials",
+      "status": 200,
+      "checkedAt": "2026-08-25T00:00:00.000Z"
+    },
+    {
+      "url": "https://www.brochure.niroggyan.com/roi-calculator",
+      "status": 200,
+      "checkedAt": "2026-08-25T00:00:00.000Z"
+    },
+    {
+      "url": "https://www.demo-vizapp.niroggyan.com/overview",
+      "status": 200,
+      "checkedAt": "2026-08-25T00:00:00.000Z"
+    },
+    {
+      "url": "https://demo-corporate-dashboard.niroggyan.com/login",
+      "status": 200,
+      "checkedAt": "2026-08-25T00:00:00.000Z"
+    },
+    {
+      "url": "https://www.niro.health/",
+      "status": 200,
+      "checkedAt": "2026-08-25T00:00:00.000Z"
+    },
+    {
+      "url": "https://meetings.hubspot.com/shweta26",
+      "status": 200,
+      "checkedAt": "2026-08-25T00:00:00.000Z"
+    }
+  ],
+  "resolvedSuspicions": [
+    {
+      "item": "testimonial statistics initially read zero",
+      "verdict": "not broken",
+      "evidence": "The source uses useInView(amount 0.5) and a 2.5-second AnimatedCounter. Native scroll produced 25+, 99.9%, 1M+, and 15."
+    },
+    {
+      "item": "home expanding panels",
+      "verdict": "not broken",
+      "evidence": "Each outer Box handles both onMouseEnter and onClick. Native pointer interaction expanded every panel from 60px to 400px."
+    },
+    {
+      "item": "repeated Preview buttons",
+      "verdict": "not broken",
+      "evidence": "They open local preview modals for a user; the SDK limitation is locator ambiguity, not application failure."
+    }
+  ],
+  "unsupportedActions": [
+    {
+      "controlId": "home-nav-smart-reporting",
+      "classification": "NEEDS_STABLE_MARKER",
+      "reason": "Desktop navigation uses plain MUI Box/Typography nodes with no role, tabindex, id, test id, or data-sable-id. Only generated classes distinguish items."
+    },
+    {
+      "controlId": "home-panel-smart-reports",
+      "classification": "NEEDS_STABLE_MARKER",
+      "reason": "The event-owning panel is a plain Box with no stable semantic marker. Add data-sable-id or render an accessible button."
+    },
+    {
+      "controlId": "uj-view-smart-report-repeated",
+      "classification": "NEEDS_STABLE_MARKER",
+      "reason": "Two buttons tie on role+name; every semantic tier remains ambiguous and generated/positional CSS is rejected."
+    },
+    {
+      "controlId": "smart-report-preview-repeated",
+      "classification": "NEEDS_STABLE_MARKER",
+      "reason": "Seven enabled buttons share Preview and have no distinct accessible labels or stable markers."
+    },
+    {
+      "controlId": "hubspot-scheduling-frame",
+      "classification": "NEEDS_FRAME_BRIDGE",
+      "reason": "The in-page calendar is a cross-origin HubSpot iframe; choosing/submitting a slot is also an external side effect."
+    },
+    {
+      "controlId": "viz-try-now",
+      "classification": "NEEDS_USER_GESTURE",
+      "reason": "window.open leaves the brochure origin for the Viz App demo."
+    },
+    {
+      "controlId": "eng-corporate-try-now",
+      "classification": "NEEDS_USER_GESTURE",
+      "reason": "window.open leaves the brochure origin for an authenticated corporate dashboard."
+    },
+    {
+      "controlId": "eng-discover-ai-tools",
+      "classification": "NEEDS_USER_GESTURE",
+      "reason": "window.open leaves the brochure origin for niro.health."
+    }
+  ]
+}

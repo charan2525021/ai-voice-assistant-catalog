@@ -1,0 +1,49 @@
+{
+  "name": "sable-cloud-runtime",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "workspaces": [
+    "packages/*"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "build:packages": "npm run build --workspaces --if-present",
+    "dev": "tsx watch src/index.ts",
+    "build": "npm run build:packages && tsc -p tsconfig.json",
+    "start": "node dist/src/index.js",
+    "typecheck": "npm run build:packages && tsc -p tsconfig.json --noEmit",
+    "test": "node --import tsx --test test/*.test.ts",
+    "sample:generate": "node --import tsx scripts/generate-sample.ts",
+    "sample:serve": "node --import tsx sample-app/server.ts",
+    "niroggyan:guided-demo:generate": "NIROGGYAN_GUIDED_DEMO_TEST=1 node --import tsx client-catalogs/niroggyan-brochure/generate.ts",
+    "niroggyan:guided-demo:verify": "node --import tsx client-catalogs/niroggyan-brochure/verify-guided-demo.ts",
+    "niroggyan:guided-demo:host": "node --import tsx client-catalogs/niroggyan-brochure/live-test-host.ts",
+    "niroggyan:guided-demo:host:compiled": "node dist/client-catalogs/niroggyan-brochure/live-test-host.js",
+    "niroggyan:guided-demo:live": "bash scripts/run-niroggyan-live-demo.sh",
+    "niroggyan:guided-demo:live:verify": "node scripts/verify-niroggyan-live-gateway.mjs",
+    "voice:soak": "node --import tsx scripts/voice-soak.ts",
+    "postgres:import": "node --import tsx scripts/import-postgres.ts"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.61.0",
+    "@fastify/websocket": "^11.2.0",
+    "@sable/model-client": "0.1.0",
+    "@sable/runtime-core": "0.1.0",
+    "@sable/sdk-contracts": "file:../product_live_assist/packages/sdk-contracts",
+    "@sable/speech-core": "0.1.0",
+    "dotenv": "^17.4.2",
+    "fastify": "^5.5.0",
+    "pg": "^8.16.0",
+    "ws": "^8.18.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.15.0",
+    "@types/pg": "^8.15.0",
+    "@types/ws": "^8.18.0",
+    "tsx": "^4.20.0",
+    "typescript": "^5.8.0"
+  }
+}
