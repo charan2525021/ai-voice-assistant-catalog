@@ -20,15 +20,15 @@ Output: `server/data/brain/<product>/product-graph.json`, plus verified journeys
 
 ## Pipeline
 
-| Stage | File | Does |
-|---|---|---|
-| ① Cartographer | `cartographer.ts` | Breadth-first surface map from the element/a11y list. **Read-only** — follows navigation, never submits. No vision → ~free. |
-| ② Curriculum Planner | `planner.ts` | Turns screens + ingested docs into a **ranked list of jobs** ("Create a task"). This is what makes exploration goal-directed instead of a combinatorial crawl. |
-| ③ Explorer | `explorer.ts` | Attempts ONE job in a fresh browser; records each successful action with a **durable selector** (ARIA role + accessible name). |
-| ④ Verifier | `verifier.ts` | Replays the journey in a **brand-new session** and asserts the postcondition. Deterministic, no model. **Nothing enters the usable graph without passing.** |
-| ⑤ Semanticist | `semanticist.ts` | Writes what the capability *means*, grounded in docs. |
-| — Graph | `graph.ts`, `types.ts` | Persists the graph; exports verified journeys → Brain `flows`. |
-| — Safety | `safety.ts` | Structural interlocks (below). |
+| Stage                | File                   | Does                                                                                                                                                           |
+| ----------------------| ------------------------| ----------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| ① Cartographer       | `cartographer.ts`      | Breadth-first surface map from the element/a11y list. **Read-only** — follows navigation, never submits. No vision → ~free.                                    |
+| ② Curriculum Planner | `planner.ts`           | Turns screens + ingested docs into a **ranked list of jobs** ("Create a task"). This is what makes exploration goal-directed instead of a combinatorial crawl. |
+| ③ Explorer           | `explorer.ts`          | Attempts ONE job in a fresh browser; records each successful action with a **durable selector** (ARIA role + accessible name).                                 |
+| ④ Verifier           | `verifier.ts`          | Replays the journey in a **brand-new session** and asserts the postcondition. Deterministic, no model. **Nothing enters the usable graph without passing.**    |
+| ⑤ Semanticist        | `semanticist.ts`       | Writes what the capability *means*, grounded in docs.                                                                                                          |
+| — Graph              | `graph.ts`, `types.ts` | Persists the graph; exports verified journeys → Brain `flows`.                                                                                                 |
+| — Safety             | `safety.ts`            | Structural interlocks (below).                                                                                                                                 |
 
 ## Why journeys, not pages
 
