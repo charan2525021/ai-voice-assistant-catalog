@@ -1,0 +1,17 @@
+{
+  "apiBaseUrl": "http://localhost:8787",
+  "installationId": "niroggyan-brochure-guided-demo-test-installation",
+  "origin": "https://www.brochure.niroggyan.com",
+  "catalogTrustKeys": [
+    {
+      "keyId": "niroggyan-brochure-e54584e51c2a",
+      "algorithm": "ES256",
+      "jwk": {
+        "kty": "EC",
+        "x": "eycUka52XSf_XFTTRnfDs4R3q_WNqPNSwXhypjE8BYk",
+        "y": "tsrko4J4wj4h4ab4lkvOKsZjhTI1PoEAEvnHLTnhdms",
+        "crv": "P-256"
+      }
+    }
+  ]
+}

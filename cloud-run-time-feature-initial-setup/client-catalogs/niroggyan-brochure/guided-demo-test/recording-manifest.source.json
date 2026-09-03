@@ -1,0 +1,159 @@
+{
+  "schemaVersion": 1,
+  "catalogVersionId": "niroggyan-brochure-v2-test",
+  "profileId": "niroggyan-brochure-guided-demo",
+  "status": "signed_text_fallback_ready",
+  "note": "The correct brochure catalog contains no approved recording bytes with verifiable transcript-to-file mapping. Runtime TTS uses these exact signed texts until approved audio files and SHA-256 metadata are supplied; unrelated niro.health audio cache files are not reused.",
+  "utterances": [
+    {
+      "key": "greeting",
+      "text": "Welcome to the NirogGyan guided demo. I will first understand your context, then walk you through the relevant parts of our public brochure.",
+      "audioAssetId": null
+    },
+    {
+      "key": "question:visitor-organisation",
+      "text": "Before we begin, what kind of organisation are you joining from?",
+      "audioAssetId": null
+    },
+    {
+      "key": "question:visitor-goal",
+      "text": "What would you most like to understand or see today?",
+      "audioAssetId": null
+    },
+    {
+      "key": "question:lab-volume",
+      "text": "Approximately how many patient reports does your laboratory process in a month?",
+      "audioAssetId": null
+    },
+    {
+      "key": "question:hospital-integration",
+      "text": "Which reporting or integration environment matters most to you, such as LIS, HIS, or EHR?",
+      "audioAssetId": null
+    },
+    {
+      "key": "module:overview:introduction",
+      "text": "I will begin with the problem NirogGyan addresses and the main value presented on the brochure.",
+      "audioAssetId": null
+    },
+    {
+      "key": "module:overview:completion",
+      "text": "That completes the NirogGyan overview.",
+      "audioAssetId": null
+    },
+    {
+      "key": "module:overview:failure",
+      "text": "The overview could not be verified on the current page. I have paused so we do not continue from an uncertain state.",
+      "audioAssetId": null
+    },
+    {
+      "key": "module:smart-reporting:introduction",
+      "text": "Next, I will explain the two Smart Reporting formats shown on the brochure.",
+      "audioAssetId": null
+    },
+    {
+      "key": "module:smart-reporting:completion",
+      "text": "That covers the Smart Report and Viz App formats.",
+      "audioAssetId": null
+    },
+    {
+      "key": "module:smart-reporting:failure",
+      "text": "The Smart Reporting section could not be verified. I have paused the demo.",
+      "audioAssetId": null
+    },
+    {
+      "key": "module:viz-app:introduction",
+      "text": "I will now open the first-party Viz App brochure page using the verified user-journey control.",
+      "audioAssetId": null
+    },
+    {
+      "key": "module:viz-app:completion",
+      "text": "The Viz App brochure page is now open and verified.",
+      "audioAssetId": null
+    },
+    {
+      "key": "module:viz-app:failure",
+      "text": "I could not safely reach the Viz App brochure page, so I have paused.",
+      "audioAssetId": null
+    },
+    {
+      "key": "module:engagement:introduction",
+      "text": "Now I will move to the patient-engagement part of the brochure.",
+      "audioAssetId": null
+    },
+    {
+      "key": "module:engagement:completion",
+      "text": "The engagement page is open. It presents follow-ups, communication, and related engagement tools.",
+      "audioAssetId": null
+    },
+    {
+      "key": "module:engagement:failure",
+      "text": "I could not safely reach the engagement page, so I have paused.",
+      "audioAssetId": null
+    },
+    {
+      "key": "module:whatsapp-preview:introduction",
+      "text": "I will briefly open the local WhatsApp follow-up preview, explain it, and close it before continuing.",
+      "audioAssetId": null
+    },
+    {
+      "key": "module:whatsapp-preview:completion",
+      "text": "The WhatsApp preview is now closed and the engagement page is ready for the next step.",
+      "audioAssetId": null
+    },
+    {
+      "key": "module:whatsapp-preview:failure",
+      "text": "The WhatsApp preview did not return to a verified closed state, so I have paused.",
+      "audioAssetId": null
+    },
+    {
+      "key": "module:roi-scenario:introduction",
+      "text": "I will now run the brochure's ROI calculator with non-personal sample values. This is a marketing scenario, not a forecast.",
+      "audioAssetId": null
+    },
+    {
+      "key": "module:roi-scenario:completion",
+      "text": "That completes the sample ROI scenario. Actual results can vary by laboratory.",
+      "audioAssetId": null
+    },
+    {
+      "key": "module:roi-scenario:failure",
+      "text": "The sample ROI result could not be verified, so I have paused instead of quoting an uncertain number.",
+      "audioAssetId": null
+    },
+    {
+      "key": "module:customer-proof:introduction",
+      "text": "I will finish the main walkthrough with the testimonials and attributed statistics presented on the brochure.",
+      "audioAssetId": null
+    },
+    {
+      "key": "module:customer-proof:completion",
+      "text": "That completes the brochure's customer-evidence section. These figures remain attributed website claims.",
+      "audioAssetId": null
+    },
+    {
+      "key": "module:customer-proof:failure",
+      "text": "The testimonial figures did not reach their verified final state, so I have paused.",
+      "audioAssetId": null
+    },
+    {
+      "key": "module:booking-preview:introduction",
+      "text": "I will show the scheduling handoff without choosing a time or submitting a booking.",
+      "audioAssetId": null
+    },
+    {
+      "key": "module:booking-preview:completion",
+      "text": "The scheduling preview is closed. No meeting was selected or submitted.",
+      "audioAssetId": null
+    },
+    {
+      "key": "module:booking-preview:failure",
+      "text": "The scheduling dialog did not return to a verified closed state, so I have paused.",
+      "audioAssetId": null
+    },
+    {
+      "key": "closing",
+      "text": "Thank you for exploring NirogGyan. I have kept your answers as lead context for human follow-up; this demo has not decided whether the lead is qualified.",
+      "audioAssetId": null
+    }
+  ]
+}
