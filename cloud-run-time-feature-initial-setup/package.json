@@ -24,6 +24,9 @@
     "niroggyan:guided-demo:host:compiled": "node dist/client-catalogs/niroggyan-brochure/live-test-host.js",
     "niroggyan:guided-demo:live": "bash scripts/run-niroggyan-live-demo.sh",
     "niroggyan:guided-demo:live:verify": "node scripts/verify-niroggyan-live-gateway.mjs",
+    "dynamic:generate": "node --import tsx scripts/generate-dynamic-installation.ts",
+    "dynamic:host": "node --import tsx scripts/dynamic-test-host.ts",
+    "dynamic:host:compiled": "node dist/scripts/dynamic-test-host.js",
     "voice:soak": "node --import tsx scripts/voice-soak.ts",
     "postgres:import": "node --import tsx scripts/import-postgres.ts"
   },
