@@ -1,9 +1,30 @@
-import type { JsonValue, RestoredCatalogNavigationCheckpoint, RestoredTranscriptMessage, SignedCatalogEnvelope } from "@sable/sdk-contracts";
+import type { DynamicToolKind, JsonValue, RestoredCatalogNavigationCheckpoint, RestoredTranscriptMessage, SignedCatalogEnvelope } from "@sable/sdk-contracts";
 import type { KnowledgeHit, RuntimeBundle, RuntimeScope } from "@sable/runtime-core";
 import type { NeutralMessage } from "@sable/model-client";
 import type { GuidedDemoSessionState } from "./demo-director.js";
 import type { DemoInterruptionPlan } from "./demo-interruption-planner.js";
 import type { DemoSalesPlayGrounding } from "./demo-sales-play-retriever.js";
+
+/**
+ * Per-installation opt-in for AIVP-style dynamic fallback. When enabled and the
+ * signed-catalog planner cannot match a journey to the user's request, the
+ * runtime enters a bounded Plan-then-Execute loop that reasons over the SDK's
+ * live UIMap and issues single semantic tool calls back to the SDK. Disabled by
+ * default; existing installations behave exactly as they did before.
+ */
+export interface DynamicModeConfig {
+  enabled: boolean;
+  /** Maximum LLM iterations per user turn. Clamped to [1, 15]; default 8. */
+  maxIterationsPerTurn?: number;
+  /** Allowlist of dynamic tools the LLM may propose. Default: all built-ins. */
+  allowedTools?: DynamicToolKind[];
+  /**
+   * When true, low-risk dynamic actions (read, reversible_write) skip the
+   * SDK's approval gate. External and destructive actions always confirm. When
+   * false, every dynamic action confirms — parity with signed-catalog defaults.
+   */
+  autoConfirmLowRisk?: boolean;
+}
 
 export interface Installation {
   installationId: string;
@@ -15,6 +36,7 @@ export interface Installation {
   allowedRoles: string[];
   activeCatalogVersionId: string;
   guidedDemo?: { enabled: boolean };
+  dynamicMode?: DynamicModeConfig;
   disabled?: boolean;
   voice?: Partial<{ languageCode: string; speaker: string; silenceTimeoutMs: number; minimumSpeechMs: number; maximumUtteranceMs: number; audioFrameMs: number; vadThreshold: number; autoStop: boolean; bargeIn: boolean; speakMode: "voice_turns" | "all" | "off"; stepNarration: boolean }>;
 }
