@@ -59,6 +59,16 @@ export interface SableAgentConfig {
   demoRecordingLoader?: GuidedDemoRecordingLoader;
   /** Same-browser cross-page and cross-tab continuity. Set false to disable; defaults to localStorage when available. */
   continuity?: false | ContinuityOptions;
+  /**
+   * Dynamic-mode UIMap streaming. When enabled (default), the SDK builds a
+   * bounded semantic snapshot of visible interactive elements on each user
+   * turn and includes it in the outgoing `user_turn` message. The cloud
+   * runtime uses it only when the signed-catalog planner returns no match
+   * AND the installation opts into dynamic fallback. Set false to disable
+   * — the SDK will not send UIMaps and will refuse `execute_dynamic_tool`
+   * commands even if the runtime issues them.
+   */
+  dynamicMode?: boolean;
 }
 
 export interface SableAgent {
