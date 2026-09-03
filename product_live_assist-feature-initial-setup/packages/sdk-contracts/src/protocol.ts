@@ -136,6 +136,95 @@ export interface RestoredCatalogNavigationCheckpoint {
   destinationUrl: string;
 }
 
+/**
+ * Dynamic-mode types. Only used when the signed-catalog planner returned no
+ * matching journey AND the installation opted into dynamic fallback. The
+ * signed-catalog path never sees any of these types.
+ *
+ * A "dynamic tool" is a bounded browser primitive the runtime may request the
+ * SDK to execute against the live DOM. The target is described semantically —
+ * never as a CSS selector, XPath, or coordinates. The SDK resolves the target
+ * locally through a ranked strategy chain and refuses to act below a confidence
+ * threshold. Destructive dynamic tools go through the same approval bridge the
+ * signed-catalog path uses.
+ */
+export type DynamicToolKind =
+  | "click"
+  | "fill"
+  | "select"
+  | "check"
+  | "uncheck"
+  | "hover"
+  | "scroll"
+  | "navigate"
+  | "wait"
+  | "read";
+
+export interface DynamicToolTarget {
+  /** data-testid / data-test-id / data-qa value declared by the host app. */
+  testId?: string;
+  ariaLabel?: string;
+  /** ARIA role or computed role (`button`, `link`, `textbox`, ...). */
+  role?: string;
+  /** Computed accessible name for the element. */
+  accessibleName?: string;
+  /** Direct visible text content the user would see. */
+  text?: string;
+  /** Optional: a stable UIMap element ID sent by the SDK in the last snapshot. */
+  elementId?: string;
+}
+
+export interface UIMapElement {
+  /** Stable within one snapshot; the SDK does not persist across snapshots. */
+  id: string;
+  role: string;
+  label?: string;
+  accessibleName?: string;
+  testId?: string;
+  text?: string;
+  placeholder?: string;
+  /** Semantic path — for example `/main/form/input[1]`. Never a CSS selector. */
+  path: string;
+  /** True when the SDK's privacy engine masked or refused to capture the value. */
+  sensitive?: boolean;
+  editable?: boolean;
+  visible: boolean;
+}
+
+export interface UIMapSnapshot {
+  /** Full URL including protocol + host (best-effort; a bounded string). */
+  url: string;
+  /** Pathname only, without query or fragment. */
+  path: string;
+  title?: string;
+  /** Interactive-first, size-capped by the SDK before sending. */
+  elements: UIMapElement[];
+  capturedAt: string;
+}
+
+/**
+ * Result the SDK sends back after executing one server-requested dynamic tool.
+ * `matchedElement.confidence` is on 0..1 for observability; the SDK refuses to
+ * act below a threshold and returns `success=false` with a `CONTROL_NOT_FOUND`
+ * error in that case.
+ */
+export interface DynamicToolResult {
+  commandId: string;
+  turnId: string;
+  stepId: string;
+  success: boolean;
+  data?: JsonValue;
+  error?: { code: string; message: string };
+  matchedElement?: {
+    role?: string;
+    label?: string;
+    testId?: string;
+    strategy: "testId" | "ariaLabel" | "roleName" | "labelFuzzy" | "text" | "elementId";
+    confidence: number;
+  };
+  durationMs: number;
+}
+
 export type SdkClientMessage =
   | (ClientMessageBase & { kind: "sable.sdk.client.ready"; catalogVersionId: string; currentUrl: string })
   | (ClientMessageBase & { kind: "sable.sdk.client.demo_control"; action: DemoControlAction })
@@ -146,7 +235,7 @@ export type SdkClientMessage =
       journey?: RestoredJourneyCheckpoint;
       catalogNavigation?: RestoredCatalogNavigationCheckpoint;
     })
-  | (ClientMessageBase & { kind: "sable.sdk.client.user_turn"; turnId: string; text: string; modality: "text" | "voice" })
+  | (ClientMessageBase & { kind: "sable.sdk.client.user_turn"; turnId: string; text: string; modality: "text" | "voice"; uiMap?: UIMapSnapshot })
   | (ClientMessageBase & { kind: "sable.sdk.client.observation"; observation: ScreenObservation; reason: "initial" | "changed" | "requested"; replyToCommandId?: string; turnId?: string })
   | (ClientMessageBase & {
       kind: "sable.sdk.client.journey_result";
@@ -171,7 +260,8 @@ export type SdkClientMessage =
     })
   | (ClientMessageBase & { kind: "sable.sdk.client.audio_playback"; utteranceId: string; turnId: string; sequence: number; state: "started" | "ended" | "cancelled" | "failed"; detail?: string })
   | (ClientMessageBase & { kind: "sable.sdk.client.interrupt"; reason: "user" | "navigation" | "logout" | "page_hidden" })
-  | (ClientMessageBase & { kind: "sable.sdk.client.pong"; replyTo: string });
+  | (ClientMessageBase & { kind: "sable.sdk.client.pong"; replyTo: string })
+  | (ClientMessageBase & { kind: "sable.sdk.client.dynamic_tool_result"; result: DynamicToolResult });
 
 interface ServerCommandBase {
   schemaVersion: typeof SDK_PROTOCOL_VERSION;
@@ -249,24 +339,29 @@ export type SdkServerCommand =
       voice?: string;
     })
   | (ServerCommandBase & { kind: "sable.sdk.server.ping" })
-  | (ServerCommandBase & { kind: "sable.sdk.server.error"; code: string; message: string; retryable: boolean });
+  | (ServerCommandBase & { kind: "sable.sdk.server.error"; code: string; message: string; retryable: boolean })
+  | (ServerCommandBase & {
+      kind: "sable.sdk.server.execute_dynamic_tool";
+      turnId: string;
+      stepId: string;
+      tool: DynamicToolKind;
+      target?: DynamicToolTarget;
+      arguments: Record<string, JsonValue>;
+      risk: RiskLevel;
+      requiresConfirmation: boolean;
+      reasoning?: string;
+      title?: string;
+    });
 
 export type VoiceClientMessage =
   | { type: "voice.start"; languageCode: string; sampleRate: 16000; audioFrameMs: number }
   | { type: "voice.flush"; durationMs: number }
-  | { type: "voice.cancel" }
-  /** Browser acoustic evidence only. The server commits interruption after transcript validation. */
-  | { type: "voice.barge_in" };
+  | { type: "voice.cancel" };
 
 export type VoiceServerMessage =
   | { type: "voice.ready" }
   | { type: "voice.listen"; turnId: string }
-  /** STT-side acoustic evidence. The SDK may soft-pause, but must not discard playback yet. */
-  | { type: "speech.candidate"; source: "sidecar_vad" }
-  /** Acknowledges browser acoustic evidence while STT continues collecting the utterance. */
-  | { type: "speech.pending"; source: "browser_vad" }
-  /** The final transcript passed echo/noise rejection and now authoritatively interrupts playback. */
-  | { type: "speech.confirmed"; interrupted: boolean }
+  | { type: "speech.start"; interrupted: boolean }
   | { type: "transcript.partial"; text: string }
   | { type: "transcript.final"; text: string; timing?: Record<string, number | null> }
   | { type: "voice.no_speech"; reason?: string }
