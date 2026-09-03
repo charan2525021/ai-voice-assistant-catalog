@@ -4354,9 +4354,9 @@
   "signature": {
     "kind": "sable.catalog_signature",
     "algorithm": "ES256",
-    "keyId": "niroggyan-brochure-e54584e51c2a",
+    "keyId": "niroggyan-brochure-924e73213b26",
     "encoding": "base64url",
-    "value": "usU5meN1hm3QXczOY0wcHWJDIXkYlruOPyZvyRgwUP77XyWqFaQSYteFkk8cB95LavhoOwOiWkQIdTILC_UsKw",
+    "value": "hJdJgXH4YS_ZGjTXK7S_iC2sajG9Xp7hOUD2XWxD1xPSa1JdvqEw0wvVi35xv_g5gPvQYAE_5rh7hZcUaxON-A",
     "signedAt": "2026-08-25T00:00:00.000Z"
   }
 }
