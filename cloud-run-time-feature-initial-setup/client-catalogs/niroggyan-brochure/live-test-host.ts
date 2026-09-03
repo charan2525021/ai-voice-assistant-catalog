@@ -37,8 +37,8 @@ const runtimeEndpoint = new URL(runtimeInternalUrl);
 
 const cors = (origin: string | undefined): Record<string, string> => origin === allowedOrigin ? {
   "access-control-allow-origin": allowedOrigin,
-  "access-control-allow-methods": "GET,OPTIONS",
-  "access-control-allow-headers": "content-type,x-sable-test-key",
+  "access-control-allow-methods": "GET,POST,DELETE,OPTIONS",
+  "access-control-allow-headers": "content-type,authorization,x-sable-test-key",
   vary: "Origin",
 } : {};
 const send = (response: import("node:http").ServerResponse, status: number, type: string, body: string | Buffer, headers: Record<string, string> = {}) => {
@@ -129,7 +129,7 @@ const server = createServer(async (request, response) => {
         `const routerTool={definition:routerDefinition,execute:async(input,{signal})=>{const route=input&&typeof input==="object"&&typeof input.route==="string"?input.route:"";if(!routeMarkers[route])throw new Error("Route is outside the signed brochure allowlist");if(location.origin!==${JSON.stringify(allowedOrigin)})throw new Error("Current origin is not the approved brochure");if(signal.aborted)throw new Error("Navigation was cancelled");history.pushState({},"",route);dispatchEvent(new PopStateEvent("popstate"));scrollTo(0,0);if(location.pathname!==route)throw new Error("Brochure router did not accept the signed route: "+route);await waitForRouteReady(route,signal);return {route,navigated:true,stable:true}}};\n` +
         `const isolated=${JSON.stringify(isolatedJourneyTest)},automaticPersona=${JSON.stringify(automaticPersona)},voiceEnabled=${JSON.stringify(voiceEnabled)};\n` +
         `if(window.__SABLE_BROCHURE_TEST__?.agent)await window.__SABLE_BROCHURE_TEST__.agent.shutdown().catch(()=>{});\n` +
-        `const agent=await Sable.init({...cfg,voice:voiceEnabled,distribution:"script",tools:[routerTool],...(isolated||automaticPersona?{continuity:false}:{}),tokenProvider:async signal=>{const r=await fetch(host+"/api/sable-token",{signal,headers:{"x-sable-test-key":key}});if(!r.ok)throw new Error("Identity token failed");return (await r.json()).identityToken}});\n` +
+        `const agent=await Sable.init({...cfg,voice:voiceEnabled,distribution:"script",tools:[routerTool],dynamicMode:false,...(isolated||automaticPersona?{continuity:false}:{}),tokenProvider:async signal=>{const r=await fetch(host+"/api/sable-token",{signal,headers:{"x-sable-test-key":key}});if(!r.ok)throw new Error("Identity token failed");return (await r.json()).identityToken}});\n` +
         `if(isolated){try{agent.controlDemo("stop")}catch{}}\n` +
         `const events=[],ui=SableUI.mountSableUi(agent,{initiallyOpen:true,greeting:"NirogGyan guided-demo acceptance test",onEvent:event=>{events.push({at:new Date().toISOString(),event});if(events.length>500)events.shift()}});\n` +
         `const test={agent,ui,events,automaticPersona,voiceEnabled,snapshot:()=>agent.snapshot(),stop:()=>agent.stop("live acceptance stopped")};window.__SABLE_BROCHURE_TEST__=test;\n` +
