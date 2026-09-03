@@ -1,10 +1,11 @@
-import type { JsonValue, ScreenObservation, SignedCatalogEnvelope } from "@sable/sdk-contracts";
+import type { JsonValue, ScreenObservation, SignedCatalogEnvelope, UIMapSnapshot } from "@sable/sdk-contracts";
 import { createHash, randomUUID } from "node:crypto";
 import { EvidenceRouter, evidenceToSystem, type EvidenceSet, type RuntimeScope } from "@sable/runtime-core";
 import { pruneNeutralHistory, type ModelClient, type NeutralMessage } from "@sable/model-client";
 import type { RuntimeConfig } from "./config.js";
-import type { RuntimeSession, RuntimeStores } from "./contracts.js";
-import { executableJourney, TurnPlanner, type ActiveJourneyContext, type DemoRuntimeStateContext, type TurnPlan } from "./turn-planner.js";
+import type { DynamicModeConfig, RuntimeSession, RuntimeStores } from "./contracts.js";
+import { executableJourney, TurnPlanner, type ActiveJourneyContext, type TurnPlan } from "./turn-planner.js";
+import { DynamicAgent, type DynamicAgentEvents, type DynamicAgentRunResult, type DynamicPlan } from "./dynamic-agent.js";
 
 export interface TurnRequest { turnId: string; text: string; modality: "text" | "voice"; }
 export interface ConversationState { messages: NeutralMessage[]; }
@@ -32,6 +33,13 @@ export interface CoordinatedTurn {
   action?: JourneyAction;
   catalogNavigation?: CatalogNavigationAction;
   streamedSentences: string[];
+  /**
+   * True when the coordinator's default fallback answer (the "not mapped"
+   * message) would have been produced. When `options.suppressCatalogGap` is
+   * set, the coordinator returns early with this flag instead of writing the
+   * default answer, so the caller can invoke `runDynamic` instead.
+   */
+  catalogGap?: boolean;
 }
 
 function approvedCatalogNavigationPlan(
@@ -122,6 +130,7 @@ function explicitlyNamesVisibleElement(requestText: string, screen: ScreenObserv
 export class TurnCoordinator {
   private readonly evidence: EvidenceRouter;
   private readonly planner: TurnPlanner;
+  private readonly dynamicAgent: DynamicAgent;
   constructor(
     private readonly config: RuntimeConfig,
     private readonly stores: RuntimeStores,
@@ -130,6 +139,7 @@ export class TurnCoordinator {
   ) {
     this.evidence = new EvidenceRouter(stores.catalogs, stores.knowledge, embedQuery, undefined, config.retrieval.deadlineMs, config.retrieval.chunks);
     this.planner = new TurnPlanner(model);
+    this.dynamicAgent = new DynamicAgent(model, config);
   }
 
   private scope(session: RuntimeSession): RuntimeScope {
@@ -182,7 +192,7 @@ export class TurnCoordinator {
     catalog: SignedCatalogEnvelope,
     conversation: ConversationState,
     request: TurnRequest,
-    options: { signal?: AbortSignal; activeJourney?: ActiveJourneyContext; demoRuntimeState?: DemoRuntimeStateContext } = {},
+    options: { signal?: AbortSignal; activeJourney?: ActiveJourneyContext } = {},
   ): Promise<TurnPlan> {
     const bundle = await this.stores.catalogs.getBundle(this.scope(session));
     if (!bundle) throw new Error("product has no published runtime bundle");
@@ -196,7 +206,7 @@ export class TurnCoordinator {
     request: TurnRequest,
     plan: TurnPlan,
     observation: ScreenObservation | undefined,
-    options: { signal?: AbortSignal; onSentence?(sentence: string): void } = {},
+    options: { signal?: AbortSignal; onSentence?(sentence: string): void; suppressCatalogGap?: boolean } = {},
   ): Promise<CoordinatedTurn> {
     const text = request.text.trim().slice(0, this.config.reasoning.maxUserMessage);
     if (!text) throw new Error("user turn is empty");
@@ -224,6 +234,12 @@ export class TurnCoordinator {
     const explicitVisibleAction = plan.intent === "action" && explicitlyNamesVisibleElement(text, evidence.screen);
     if (((plan.actionAttempted ?? plan.actionRequested) || explicitVisibleAction) && !sdkJourney && !catalogNavigation) {
       await this.recordCatalogGap(session, request, plan, evidence);
+      if (options.suppressCatalogGap) {
+        // Rewind the user message the caller pushed above so runDynamic can
+        // append it once and the conversation history stays clean.
+        conversation.messages.pop();
+        return { answer: "", evidence, streamedSentences: [], catalogGap: true };
+      }
       const answer = evidence.matchedScreen
         ? "I can see this trained screen, but that control is not mapped as an approved action, so I didn't click it. I can still explain what is visible."
         : "I can observe and explain this page, but it is not a trained screen and no approved action is mapped here, so I didn't click anything.";
@@ -285,6 +301,46 @@ export class TurnCoordinator {
       ...(eligible && sdkJourney ? { action: { journeyId: sdkJourney.id, inputs, acknowledgement: answer, ...(navigation ? { segment: { startStepId: navigation.startStepId, stopAfterStepId: navigation.stopAfterStepId } } : {}) } } : {}),
       ...(eligible && catalogNavigation ? { catalogNavigation: { ...catalogNavigation, acknowledgement: answer } } : {}),
     };
+  }
+
+  /**
+   * Dynamic-mode fallback entry point. Callable by server.ts when the
+   * signed-catalog planner returns no journey AND the installation opts into
+   * dynamic mode. The coordinator does not own the WS transport, so the caller
+   * supplies an `executeTool` callback that dispatches an execute_dynamic_tool
+   * command over the WS and resolves with the SDK's DynamicToolResult.
+   *
+   * The dynamic loop runs a bounded Plan-then-Execute agent; each iteration is
+   * one model call. Narration + plan snapshots are streamed through the callbacks.
+   */
+  async runDynamic(
+    session: RuntimeSession,
+    catalog: SignedCatalogEnvelope,
+    conversation: ConversationState,
+    request: TurnRequest,
+    uiMap: UIMapSnapshot | undefined,
+    dynamicConfig: DynamicModeConfig,
+    events: DynamicAgentEvents,
+  ): Promise<DynamicAgentRunResult> {
+    const bundle = await this.stores.catalogs.getBundle(this.scope(session));
+    if (!bundle) throw new Error("product has no published runtime bundle");
+    const text = request.text.trim().slice(0, this.config.reasoning.maxUserMessage);
+    if (!text) throw new Error("user turn is empty");
+    conversation.messages.push({ role: "user", blocks: [{ type: "text", text }] });
+    conversation.messages = pruneNeutralHistory(conversation.messages, this.config.reasoning.maxHistory);
+    const result = await this.dynamicAgent.run({
+      session,
+      catalog,
+      bundle,
+      conversation,
+      request: { ...request, text },
+      uiMap,
+    }, events, dynamicConfig);
+    if (result.finalText) {
+      conversation.messages.push({ role: "assistant", blocks: [{ type: "text", text: result.finalText }] });
+      conversation.messages = pruneNeutralHistory(conversation.messages, this.config.reasoning.maxHistory);
+    }
+    return result;
   }
 
   async explainAfterPresentation(
