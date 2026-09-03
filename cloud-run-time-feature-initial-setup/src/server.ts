@@ -29,10 +29,19 @@ import {
   type DemoExecutionInstruction,
   type GuidedDemoSessionState,
 } from "./demo-director.js";
-import { planDemoInterruption, turnPlanFromDemoInterruption, type DemoInterruptionPlan } from "./demo-interruption-planner.js";
+import { DemoInterruptionPlanner, type DemoInterruptionPlan } from "./demo-interruption-planner.js";
 import { retrieveDemoSalesPlays, type DemoSalesPlayGrounding } from "./demo-sales-play-retriever.js";
 import { DemoInterruptionResponder, demoPlaybackTransitionText } from "./demo-interruption-responder.js";
 import { resolveDemoSalesPlays } from "./demo-sales-play-retriever.js";
+
+interface PendingDynamicTool {
+  commandId: string;
+  turnId: string;
+  stepId: string;
+  resolve(result: import("@sable/sdk-contracts").DynamicToolResult): void;
+  reject(error: Error): void;
+  timer: NodeJS.Timeout;
+}
 
 interface ControlState {
   socket: WebSocket;
@@ -40,6 +49,8 @@ interface ControlState {
   catalog: SignedCatalogEnvelope;
   conversation: ConversationState;
   transcript: RestoredTranscriptMessage[];
+  lastUIMap?: import("@sable/sdk-contracts").UIMapSnapshot;
+  pendingDynamicTools?: Map<string, PendingDynamicTool>;
   continuityId?: string;
   continuityRevision: number;
   continuityStartedAt: string;
@@ -71,8 +82,6 @@ interface ControlState {
     generation: number;
     timer: NodeJS.Timeout;
   };
-  /** Blocks stale narration between first confirmed speech and its accepted turn. */
-  playbackBarrier?: { generation: number; turnId?: string };
 }
 
 interface VoiceState {
@@ -83,8 +92,6 @@ interface VoiceState {
   sync: AudioSync;
   turns: TurnManager;
   outstandingSequences: Set<number>;
-  playbackGeneration: number;
-  interruptionActive: boolean;
 }
 
 function commandBase(sessionId: string) {
@@ -126,6 +133,20 @@ function isModuleContinuationRequest(text: string): boolean {
 
 function isDirectStopRequest(text: string): boolean {
   return /^(?:please\s+)?(?:stop|cancel|end)(?:\s+(?:the|this|current|active|any))?(?:\s+journey)?[.! ]*$/i.test(text.trim());
+}
+
+/**
+ * Heuristic: does the user text plainly ask the assistant to perform a browser
+ * action? Used to short-circuit the signed-catalog planner in dynamic mode
+ * installations that have no approved journeys — otherwise "click X" ends up
+ * in the answer path and the user sees a bland "I can't do that" reply.
+ * Deliberately permissive (false positives just add one dynamic-agent call,
+ * they don't unsafe-act — the resolver still gates on confidence).
+ */
+function looksLikeDynamicAction(text: string): boolean {
+  const normalized = text.trim().toLowerCase();
+  if (!normalized) return false;
+  return /\b(click|tap|press|open|select|choose|pick|check|uncheck|toggle|fill|type|enter|input|write|paste|navigate|goto|go\s+to|scroll|hover|drag|drop|submit|save|close|dismiss)\b/.test(normalized);
 }
 
 function sameContinuityScope(value: RuntimeContinuity, session: RuntimeSession): boolean {
@@ -211,6 +232,7 @@ export async function buildServer(config: RuntimeConfig, stores: RuntimeStores, 
   await app.register(websocket);
   const signer = new TokenSigner(config.tokenSigningSecret);
   const coordinator = new TurnCoordinator(config, stores, providers.model, providers.embedQuery);
+  const demoInterruptionPlanner = new DemoInterruptionPlanner(providers.model);
   const demoInterruptionResponder = new DemoInterruptionResponder(providers.model);
   const narrationCache = new FileNarrationAudioCache(resolve("data/tts"));
   const usedTickets = new Set<string>();
@@ -439,6 +461,38 @@ export async function buildServer(config: RuntimeConfig, stores: RuntimeStores, 
     try { const session = await authenticateSession(request.headers.authorization); return await stores.catalogs.get(session.catalogVersionId, session.installation); }
     catch { return reply.code(401).send({ error: "unauthorized" }); }
   });
+  // HTTP fallback for dynamic tool results. Cloudflared quick tunnels buffer
+  // WS return frames for tens of seconds when the socket is otherwise idle,
+  // so the SDK sends every dynamic_tool_result over BOTH the WS AND this HTTP
+  // endpoint. Whichever arrives first resolves the pending awaiter; the other
+  // becomes a no-op.
+  app.post("/api/v3/sdk/dynamic-tool-result", async (request, reply) => {
+    try {
+      const session = await authenticateSession(request.headers.authorization);
+      const raw = request.body as { result?: unknown };
+      if (!raw || typeof raw !== "object" || !raw.result) return reply.code(400).send({ error: "missing result" });
+      // Reuse the same validator the WS path uses so the shape is enforced.
+      const envelope = assertValidSdkClientMessage({
+        kind: "sable.sdk.client.dynamic_tool_result",
+        schemaVersion: SDK_PROTOCOL_VERSION,
+        messageId: createId("msg"),
+        sessionId: session.sessionId,
+        sentAt: new Date().toISOString(),
+        result: raw.result,
+      } as unknown) as { kind: "sable.sdk.client.dynamic_tool_result"; result: import("@sable/sdk-contracts").DynamicToolResult };
+      const state = controls.get(session.sessionId);
+      const pending = state?.pendingDynamicTools?.get(envelope.result.commandId);
+      console.log(`[dynamic-tool] HTTP RECV commandId=${envelope.result.commandId} success=${envelope.result.success} strategy=${envelope.result.matchedElement?.strategy ?? "n/a"} confidence=${envelope.result.matchedElement?.confidence ?? "n/a"} pending=${!!pending}`);
+      if (pending) {
+        clearTimeout(pending.timer);
+        state!.pendingDynamicTools!.delete(envelope.result.commandId);
+        pending.resolve(envelope.result);
+      }
+      return reply.code(202).send({ ok: true, matched: !!pending });
+    } catch (error) {
+      return reply.code(401).send({ error: error instanceof Error ? error.message : "unauthorized" });
+    }
+  });
   app.post("/api/v3/sdk/handoffs", async (request, reply) => {
     try {
       const session = await authenticateSession(request.headers.authorization);
@@ -521,16 +575,6 @@ export async function buildServer(config: RuntimeConfig, stores: RuntimeStores, 
     return mode === "all" || (mode === "voice_turns" && request.modality === "voice");
   };
 
-  const releasePlaybackBarrier = (state: ControlState, turnId: string): boolean => {
-    const barrier = state.playbackBarrier;
-    if (!barrier) return true;
-    if (barrier.turnId !== turnId) return false;
-    const voice = voices.get(state.session.sessionId);
-    if (voice) send(voice.socket, { type: "tts.resume", generation: barrier.generation, turnId });
-    state.playbackBarrier = undefined;
-    return true;
-  };
-
   const emitFinal = (state: ControlState, request: TurnRequest, text: string) => {
     send(state.socket, { ...commandBase(state.session.sessionId), kind: "sable.sdk.server.assistant_final", turnId: request.turnId, text });
     const key = `assistant:${request.turnId}`;
@@ -553,10 +597,6 @@ export async function buildServer(config: RuntimeConfig, stores: RuntimeStores, 
     const voice = voices.get(state.session.sessionId);
     const utteranceId = identifiers.utteranceId ?? createId("utterance");
     if (!voice || !lines.length) return null;
-    if (!releasePlaybackBarrier(state, request.turnId)) {
-      send(voice.socket, { type: "tts.end", utteranceId, turnId: request.turnId, lastSequence: null, purpose });
-      return null;
-    }
     const mode = state.session.installation.voice?.speakMode ?? config.voice.speakMode;
     const narratedCatalog = (purpose === "journey_step" || purpose === "demo")
       && mode !== "off"
@@ -622,13 +662,9 @@ export async function buildServer(config: RuntimeConfig, stores: RuntimeStores, 
     const plan: DemoInterruptionPlan = {
       intent: "product_question",
       responseMode: "answer",
-      taskControl: "side_question",
       playbackDirective: "remain_paused",
       needsFreshObservation: false,
       needsKnowledge: true,
-      actionRequested: false,
-      presentationRequested: false,
-      journeyInputs: {},
       policyAdjustments: ["Intake questions remain unanswered while an obvious prospect question is handled."],
     };
     const grounding = retrieveDemoSalesPlays(plan, { catalog: state.catalog, demo, requestText: request.text });
@@ -878,53 +914,11 @@ export async function buildServer(config: RuntimeConfig, stores: RuntimeStores, 
   ): Promise<void> => {
     const controller = state.demoPlanning;
     if (!controller || controller.signal.aborted || !state.demoDirector || state.demo?.phase !== "answering") return;
-    let answerAlreadyRecorded = false;
-    let baseAnswer = fixedAnswer;
-    if (!baseAnswer && plan.responseMode === "navigate" && plan.playbackDirective !== "replace_module") {
-      const turnPlan = turnPlanFromDemoInterruption(plan);
-      const result = await coordinator.run(
-        state.session,
-        state.catalog,
-        state.conversation,
-        request,
-        turnPlan,
-        observation ?? state.observation,
-        { signal: controller.signal },
-      );
-      if (controller.signal.aborted || state.demoPlanningGeneration !== generation || state.pendingDemoInterruption?.request.turnId !== request.turnId) return;
-      answerAlreadyRecorded = true;
-      if (result.catalogNavigation) {
-        emitFinal(state, request, result.answer);
-        const lastSequence = await speakLines(state, request, [result.answer], "acknowledgement");
-        const voice = voices.get(state.session.sessionId);
-        if (request.modality === "voice" && voice) await voice.sync.waitFor(lastSequence);
-        if (controller.signal.aborted || state.demoPlanningGeneration !== generation || state.pendingDemoInterruption?.request.turnId !== request.turnId) return;
-        const commandId = createId("demo-navigation");
-        state.pendingCatalogNavigation = { commandId, request, plan: turnPlan, action: result.catalogNavigation, generation: state.generation };
-        await persistContinuity(state);
-        send(state.socket, {
-          schemaVersion: SDK_PROTOCOL_VERSION,
-          commandId,
-          sessionId: state.session.sessionId,
-          sentAt: new Date().toISOString(),
-          kind: "sable.sdk.server.run_catalog_navigation",
-          turnId: request.turnId,
-          catalogVersionId: state.session.catalogVersionId,
-          sourceScreenId: result.catalogNavigation.sourceScreenId,
-          controlId: result.catalogNavigation.controlId,
-          targetScreenId: result.catalogNavigation.targetScreenId,
-        });
-        return;
-      }
-      // The full planner was used, but deterministic catalog policy found no
-      // executable mapped route. Preserve its grounded limitation as the
-      // answer and leave the interrupted module resumable.
-      baseAnswer = result.answer;
-    }
     const directControl = plan.intent === "action" && !plan.unavailableReason && !plan.needsKnowledge;
     const streamedSpeech: Promise<number | null>[] = [];
     const voice = voices.get(state.session.sessionId);
     const utteranceId = createId("utterance");
+    let baseAnswer = fixedAnswer;
     if (!baseAnswer && directControl) baseAnswer = "Of course.";
     if (!baseAnswer) {
       const plays = resolveDemoSalesPlays(state.catalog, grounding);
@@ -941,19 +935,18 @@ export async function buildServer(config: RuntimeConfig, stores: RuntimeStores, 
         signal: controller.signal,
         onSentence: (sentence) => {
           send(state.socket, { ...commandBase(state.session.sessionId), kind: "sable.sdk.server.assistant_delta", turnId: request.turnId, text: sentence });
-          if (voice && shouldSpeak(state, request) && releasePlaybackBarrier(state, request.turnId)) streamedSpeech.push(voice.speech.say(sentence, { utteranceId, turnId: request.turnId, purpose: "answer" }));
+          if (voice && shouldSpeak(state, request)) streamedSpeech.push(voice.speech.say(sentence, { utteranceId, turnId: request.turnId, purpose: "answer" }));
         },
       });
     }
     if (controller.signal.aborted || state.demoPlanningGeneration !== generation || state.pendingDemoInterruption?.request.turnId !== request.turnId) return;
     const transitionOptions = {
       moduleCompletedDuringInterruption: state.demo.moduleCompletedDuringInterruption === true || state.demo.resumeReason === "module_complete",
-      journeyFailed: state.demo.resumeReason === "failure",
       activeModuleId: state.demo.activeModuleId,
       nextModuleId: state.demo.playlistModuleIds[state.demo.moduleIndex + 1],
     };
     const answer = `${baseAnswer.trim()} ${demoPlaybackTransitionText(plan, state.catalog, transitionOptions)}`.replace(/\s+/g, " ").trim();
-    if (!answerAlreadyRecorded) recordControlExchange(state, request, answer);
+    recordControlExchange(state, request, answer);
     emitFinal(state, request, answer);
     let lastSequence: number | null = null;
     if (!streamedSpeech.length) {
@@ -961,7 +954,7 @@ export async function buildServer(config: RuntimeConfig, stores: RuntimeStores, 
     } else {
       // The streamed model sentences were already synthesized. Speak only the
       // deterministic transition sentence after them.
-      const transitionSequence = voice && shouldSpeak(state, request) && releasePlaybackBarrier(state, request.turnId)
+      const transitionSequence = voice && shouldSpeak(state, request)
         ? voice.speech.say(demoPlaybackTransitionText(plan, state.catalog, transitionOptions), { utteranceId, turnId: request.turnId, purpose: "answer" })
         : Promise.resolve(null);
       try {
@@ -1043,56 +1036,20 @@ export async function buildServer(config: RuntimeConfig, stores: RuntimeStores, 
         state.demo = reset.state;
       }
       const positionVerified = state.demo.phase === "awaiting_resume"
-        && (state.demo.resumeReason === "failure"
-          || state.demo.resumeReason === "module_complete"
+        && (state.demo.resumeReason === "module_complete"
           || (state.demo.resumeReason === "interruption" && (!!state.demo.checkpoint || !!state.demo.moduleCompletedDuringInterruption)));
       // Meaning can be classified while the SDK is still finishing its current
       // atomic browser action. Browser execution remains gated on a verified
       // checkpoint or terminal journey result below.
       if (state.demo.phase !== "pausing" && !positionVerified) return;
-      const activeModule = director.profile.modules.find((module) => module.id === state.demo?.activeModuleId);
-      if (!activeModule) throw new Error("The active guided-demo module is unavailable");
-      const nextModuleId = state.demo.playlistModuleIds[state.demo.moduleIndex + 1];
-      const nextModule = director.profile.modules.find((module) => module.id === nextModuleId);
-      const journeyOutcome = state.demo.resumeReason === "failure"
-        ? "failed"
-        : state.demo.resumeReason === "module_complete" || state.demo.moduleCompletedDuringInterruption
-          ? "completed"
-          : state.demo.phase === "playing"
-            ? "running"
-            : "paused";
-      const turnPlan = await coordinator.plan(state.session, state.catalog, state.conversation, pending.request, {
-        signal: controller.signal,
-        activeJourney: {
-          journeyId: activeModule.journeyId,
-          journeyName: activeModule.name,
-          paused: true,
-        },
-        demoRuntimeState: {
-          phase: state.demo.phase,
-          activeModule: { id: activeModule.id, name: activeModule.name, journeyId: activeModule.journeyId },
-          journeyOutcome,
-          ...(state.demo.resumeReason ? { resumeReason: state.demo.resumeReason } : {}),
-          checkpointAvailable: !!state.demo.checkpoint,
-          moduleCompletedDuringInterruption: state.demo.moduleCompletedDuringInterruption === true,
-          ...(nextModule ? { nextModule: { id: nextModule.id, name: nextModule.name, journeyId: nextModule.journeyId } } : {}),
-          ...(state.observation?.matchedScreenId ? {
-            currentScreen: {
-              id: state.observation.matchedScreenId,
-              ...(state.observation.matchConfidence !== undefined ? { confidence: state.observation.matchConfidence } : {}),
-            },
-          } : {}),
-          pendingInterruption: true,
-        },
-      });
-      const plan = planDemoInterruption(turnPlan, {
+      const plan = await demoInterruptionPlanner.plan({
         session: state.session,
         catalog: state.catalog,
         demo: state.demo,
         request: pending.request,
         transcript: state.transcript,
         currentScreenId: state.observation?.matchedScreenId,
-      });
+      }, { signal: controller.signal });
       if (controller.signal.aborted || state.demoPlanningGeneration !== generation || state.pendingDemoInterruption?.request.turnId !== pending.request.turnId) return;
       const grounding = retrieveDemoSalesPlays(plan, {
         catalog: state.catalog,
@@ -1111,7 +1068,6 @@ export async function buildServer(config: RuntimeConfig, stores: RuntimeStores, 
         detail: {
           intent: plan.intent,
           responseMode: plan.responseMode,
-          taskControl: plan.taskControl,
           playbackDirective: plan.playbackDirective,
           needsKnowledge: plan.needsKnowledge,
           needsFreshObservation: plan.needsFreshObservation,
@@ -1119,7 +1075,6 @@ export async function buildServer(config: RuntimeConfig, stores: RuntimeStores, 
           selectedPlayIds: grounding.selectedPlayIds,
           policyAdjustmentCount: plan.policyAdjustments.length,
           ...(plan.requestedModuleId ? { requestedModuleId: plan.requestedModuleId } : {}),
-          ...(plan.answerSubjectModuleId ? { answerSubjectModuleId: plan.answerSubjectModuleId } : {}),
         },
       });
       // Planning is intentionally early, but answering and applying playback
@@ -1152,8 +1107,7 @@ export async function buildServer(config: RuntimeConfig, stores: RuntimeStores, 
     const director = state.demoDirector;
     if (!pending?.plan || !director || !state.demo || !["answering", "awaiting_resume"].includes(state.demo.phase)) return;
     if (state.demo.phase === "awaiting_resume") {
-      const positionVerified = state.demo.resumeReason === "failure"
-        || state.demo.resumeReason === "module_complete"
+      const positionVerified = state.demo.resumeReason === "module_complete"
         || (state.demo.resumeReason === "interruption" && (!!state.demo.checkpoint || !!state.demo.moduleCompletedDuringInterruption));
       if (!positionVerified) return;
       const answering = director.beginInterruptionAnswer(state.demo);
@@ -1350,7 +1304,127 @@ export async function buildServer(config: RuntimeConfig, stores: RuntimeStores, 
     return true;
   };
 
+  const runDynamicFallback = async (
+    state: ControlState,
+    request: TurnRequest,
+    controller: AbortController,
+    generation: number,
+    utteranceId: string,
+    streamedSpeech: Promise<number | null>[],
+    voice: ReturnType<typeof voices.get>,
+  ): Promise<"ok" | "aborted"> => {
+    const dynamicConfig = state.session.installation.dynamicMode;
+    if (!dynamicConfig?.enabled) return "aborted";
+    if (!state.pendingDynamicTools) state.pendingDynamicTools = new Map();
+    const pending = state.pendingDynamicTools;
+
+    const executeTool = async (call: import("./dynamic-agent.js").DynamicToolCallProposal) => {
+      const commandId = createId("dynamic");
+      return await new Promise<import("@sable/sdk-contracts").DynamicToolResult>((resolve, reject) => {
+        const timer = setTimeout(() => {
+          pending.delete(commandId);
+          console.log(`[dynamic-tool] TIMEOUT after 90s tool=${call.tool} commandId=${commandId} target=${JSON.stringify(call.target ?? {})} — the browser SDK never returned a dynamic_tool_result within the extended window.`);
+          reject(new Error(`dynamic tool ${call.tool} timed out`));
+        }, 90_000);
+        pending.set(commandId, { commandId, turnId: request.turnId, stepId: call.stepId, resolve, reject, timer });
+        console.log(`[dynamic-tool] SEND commandId=${commandId} tool=${call.tool} target=${JSON.stringify(call.target ?? {})} risk=${call.risk} confirm=${call.requiresConfirmation}`);
+        send(state.socket, {
+          schemaVersion: SDK_PROTOCOL_VERSION,
+          commandId,
+          sessionId: state.session.sessionId,
+          sentAt: new Date().toISOString(),
+          kind: "sable.sdk.server.execute_dynamic_tool",
+          turnId: request.turnId,
+          stepId: call.stepId,
+          tool: call.tool,
+          ...(call.target ? { target: call.target } : {}),
+          arguments: call.arguments,
+          risk: call.risk,
+          requiresConfirmation: call.requiresConfirmation,
+          ...(call.reasoning ? { reasoning: call.reasoning } : {}),
+          ...(call.title ? { title: call.title } : {}),
+        });
+      });
+    };
+    const onNarration = (sentence: string) => {
+      send(state.socket, { ...commandBase(state.session.sessionId), kind: "sable.sdk.server.assistant_delta", turnId: request.turnId, text: sentence });
+      if (voice && shouldSpeak(state, request)) {
+        streamedSpeech.push(voice.speech.say(sentence, { utteranceId, turnId: request.turnId, purpose: "answer" }));
+      }
+    };
+
+    let dynamicResult;
+    try {
+      dynamicResult = await coordinator.runDynamic(
+        state.session,
+        state.catalog,
+        state.conversation,
+        request,
+        state.lastUIMap,
+        dynamicConfig,
+        { executeTool, onNarration, signal: controller.signal },
+      );
+    } catch (error) {
+      const isAbort = error instanceof Error && (error.name === "AbortError" || /abort/i.test(error.message));
+      if (isAbort) {
+        // Voice barge-in, a newer user turn, or an explicit interrupt aborted
+        // the in-flight loop. Do not emit a rude "I could not finish" line —
+        // the succeeding turn (or the interrupt) will produce its own reply.
+        // Also cancel any pending dynamic-tool commands for this turn so they
+        // do not accumulate.
+        if (state.pendingDynamicTools) {
+          for (const [id, pending] of state.pendingDynamicTools) {
+            if (pending.turnId === request.turnId) {
+              clearTimeout(pending.timer);
+              state.pendingDynamicTools.delete(id);
+              pending.reject(new Error("aborted"));
+            }
+          }
+        }
+        return "aborted";
+      }
+      const message = error instanceof Error ? error.message : String(error);
+      const answer = `I could not finish that request in dynamic mode: ${message}`;
+      state.conversation.messages.push({ role: "assistant", blocks: [{ type: "text", text: answer }] });
+      emitFinal(state, request, answer);
+      const lastSequence = await speakLines(state, request, [answer], "answer", { utteranceId });
+      if (state.busy === controller) state.busy = undefined;
+      await inviteNextVoiceTurn(state, request, lastSequence);
+      return "ok";
+    }
+    if (controller.signal.aborted || state.busy !== controller || state.generation !== generation) return "aborted";
+
+    // Diagnostic summary — extremely useful for pinpointing whether the LLM
+    // gave up before attempting or after. Prefixed so it's easy to grep.
+    console.log(`[dynamic-agent] turn=${request.turnId} text=${JSON.stringify(request.text.slice(0, 120))} status=${dynamicResult.status} iterations=${dynamicResult.iterations} toolCalls=${dynamicResult.toolCallsRun} plan=${dynamicResult.plan ? dynamicResult.plan.steps.length : 0} finalText=${JSON.stringify(dynamicResult.finalText.slice(0, 200))}`);
+    if (dynamicResult.reasoning.length) {
+      for (const [index, line] of dynamicResult.reasoning.entries()) {
+        console.log(`[dynamic-agent] turn=${request.turnId} iter${index + 1} reasoning=${JSON.stringify(line.slice(0, 200))}`);
+      }
+    }
+
+    const finalText = dynamicResult.finalText || "Done.";
+    emitFinal(state, request, finalText);
+    let lastSequence: number | null;
+    if (!streamedSpeech.length) {
+      lastSequence = await speakLines(state, request, [finalText], "answer", { utteranceId });
+    } else {
+      try {
+        const sequences = (await Promise.all(streamedSpeech)).filter((value): value is number => value !== null);
+        lastSequence = sequences.length ? Math.max(...sequences) : null;
+        if (voice) send(voice.socket, { type: "tts.end", utteranceId, turnId: request.turnId, lastSequence, purpose: "answer" });
+      } catch (error) {
+        lastSequence = null;
+        if (voice) send(voice.socket, { type: "voice.error", message: `Text-to-speech unavailable: ${(error as Error).message}` });
+      }
+    }
+    if (state.busy === controller) state.busy = undefined;
+    await inviteNextVoiceTurn(state, request, lastSequence);
+    return "ok";
+  };
+
   const resolveTurn = async (state: ControlState, request: TurnRequest, observation?: import("@sable/sdk-contracts").ScreenObservation, existingPlan?: TurnPlan, generation = state.generation) => {
+    console.log(`[resolve-turn] turnId=${request.turnId} genCheck=${state.generation}/${generation} pendingJourney=${!!state.pendingJourney} pendingCatalogPlan=${!!state.pendingCatalogPlan}`);
     if (isDirectStopRequest(request.text) && (state.pendingJourney || state.pendingCatalogPlan)) {
       const stoppedJourney = !!state.pendingJourney;
       await stopPendingJourney(state, "Stopped by the user");
@@ -1377,7 +1451,50 @@ export async function buildServer(config: RuntimeConfig, stores: RuntimeStores, 
       journeyName: `catalog plan to ${state.catalog.payload.screens.find((screen) => screen.id === state.pendingCatalogPlan?.finalTargetScreenId)?.name ?? state.pendingCatalogPlan.finalTargetScreenId}`,
       paused: true,
     } : undefined;
-    const plan = existingPlan ?? await coordinator.plan(state.session, state.catalog, state.conversation, request, { activeJourney });
+    const dynamicEnabledPreflight = !!state.session.installation.dynamicMode?.enabled
+      && !(state.demoDirector && state.demo && !["idle", "completed", "stopped"].includes(state.demo.phase));
+    // Short-circuit: when the installation has dynamic mode enabled AND the
+    // signed catalog has zero approved journeys, EVERY user turn goes to the
+    // dynamic agent. The dynamic agent decides whether to click, answer, ask,
+    // or plan — based on the actual semantic meaning of the user's text, not
+    // on a keyword regex here. This handles typos ("clikck"), non-English
+    // phrasing, and every other free-form request the LLM can understand.
+    if (dynamicEnabledPreflight && !existingPlan && state.catalog.payload.journeys.filter((j) => j.state === "approved").length === 0) {
+      console.log(`[resolve-turn] turnId=${request.turnId} SHORT-CIRCUIT to dynamic mode (dynamic-only installation, empty approved catalog)`);
+      const controller = new AbortController();
+      state.busy = controller;
+      state.session.modality = request.modality;
+      const utteranceId = createId("utterance");
+      const streamedSpeech: Promise<number | null>[] = [];
+      const voice = voices.get(state.session.sessionId);
+      voice?.turns.beginThinking();
+      const dynamicRun = await runDynamicFallback(state, request, controller, generation, utteranceId, streamedSpeech, voice);
+      if (dynamicRun === "aborted") return;
+      return;
+    }
+    let plan: TurnPlan;
+    try {
+      plan = existingPlan ?? await coordinator.plan(state.session, state.catalog, state.conversation, request, { activeJourney });
+    } catch (error) {
+      const isAbort = error instanceof Error && (error.name === "AbortError" || /abort/i.test(error.message));
+      if (isAbort) return;
+      // The signed-catalog planner rejected the LLM's structured output twice.
+      // When dynamic mode is enabled we hand the turn straight to the dynamic
+      // agent — it has its own tool schema and prompt and typically recovers.
+      if (dynamicEnabledPreflight) {
+        const controller = new AbortController();
+        state.busy = controller;
+        state.session.modality = request.modality;
+        const utteranceId = createId("utterance");
+        const streamedSpeech: Promise<number | null>[] = [];
+        const voice = voices.get(state.session.sessionId);
+        voice?.turns.beginThinking();
+        const dynamicRun = await runDynamicFallback(state, request, controller, generation, utteranceId, streamedSpeech, voice);
+        if (dynamicRun === "aborted") return;
+        return;
+      }
+      throw error;
+    }
     if (state.generation !== generation) return;
     if ((state.pendingJourney || state.pendingCatalogPlan) && plan.taskControl === "stop") {
       const stoppedJourney = !!state.pendingJourney;
@@ -1408,17 +1525,43 @@ export async function buildServer(config: RuntimeConfig, stores: RuntimeStores, 
     const utteranceId = createId("utterance");
     const streamedSpeech: Promise<number | null>[] = [];
     voice?.turns.beginThinking();
-    const result = await coordinator.run(state.session, state.catalog, state.conversation, request, plan, observation ?? state.observation, {
-      signal: controller.signal,
-      onSentence: (sentence) => {
-        streamed.push(sentence);
-        send(state.socket, { ...commandBase(state.session.sessionId), kind: "sable.sdk.server.assistant_delta", turnId: request.turnId, text: sentence });
-        if (voice && shouldSpeak(state, request)) {
-          if (releasePlaybackBarrier(state, request.turnId)) streamedSpeech.push(voice.speech.say(sentence, { utteranceId, turnId: request.turnId, purpose: "answer" }));
-        }
-      },
-    });
+    const dynamicEnabled = !!state.session.installation.dynamicMode?.enabled
+      && !(state.demoDirector && state.demo && !["idle", "completed", "stopped"].includes(state.demo.phase));
+    let result: Awaited<ReturnType<typeof coordinator.run>>;
+    try {
+      result = await coordinator.run(state.session, state.catalog, state.conversation, request, plan, observation ?? state.observation, {
+        signal: controller.signal,
+        suppressCatalogGap: dynamicEnabled,
+        onSentence: (sentence) => {
+          streamed.push(sentence);
+          send(state.socket, { ...commandBase(state.session.sessionId), kind: "sable.sdk.server.assistant_delta", turnId: request.turnId, text: sentence });
+          if (voice && shouldSpeak(state, request)) {
+            streamedSpeech.push(voice.speech.say(sentence, { utteranceId, turnId: request.turnId, purpose: "answer" }));
+          }
+        },
+      });
+    } catch (error) {
+      const isAbort = error instanceof Error && (error.name === "AbortError" || /abort/i.test(error.message));
+      if (isAbort) return;
+      // If the signed-catalog planner or coordinator produced an unrecoverable
+      // error (e.g. malformed tool arguments from the reasoning model) BUT
+      // dynamic mode is enabled, don't surface the raw error to the user —
+      // fall through to dynamic mode instead. It has its own prompt and can
+      // often make sense of the request against the live UIMap.
+      if (dynamicEnabled) {
+        const dynamicRun = await runDynamicFallback(state, request, controller, generation, utteranceId, streamedSpeech, voice);
+        if (dynamicRun === "aborted") return;
+        return;
+      }
+      throw error;
+    }
     if (controller.signal.aborted || state.busy !== controller || state.generation !== generation) return;
+    if (result.catalogGap && dynamicEnabled) {
+      const dynamicRun = await runDynamicFallback(state, request, controller, generation, utteranceId, streamedSpeech, voice);
+      if (dynamicRun === "aborted") return;
+      // runDynamicFallback owns final emission + speech drain + next-turn invite.
+      return;
+    }
     emitFinal(state, request, result.answer);
     let lastSequence: number | null;
     if (result.action || result.catalogNavigation || !streamedSpeech.length) {
@@ -1473,7 +1616,7 @@ export async function buildServer(config: RuntimeConfig, stores: RuntimeStores, 
       signal: controller.signal,
       onSentence: (sentence) => {
         send(state.socket, { ...commandBase(state.session.sessionId), kind: "sable.sdk.server.assistant_delta", turnId: request.turnId, text: sentence });
-        if (voice && shouldSpeak(state, request) && releasePlaybackBarrier(state, request.turnId)) streamedSpeech.push(voice.speech.say(sentence, { utteranceId, turnId: request.turnId, purpose: "answer" }));
+        if (voice && shouldSpeak(state, request)) streamedSpeech.push(voice.speech.say(sentence, { utteranceId, turnId: request.turnId, purpose: "answer" }));
       },
     });
     if (controller.signal.aborted || state.busy !== controller || state.generation !== generation) return;
@@ -1520,6 +1663,7 @@ export async function buildServer(config: RuntimeConfig, stores: RuntimeStores, 
           ...(demoDirector ? { demoDirector, demo: demoDirector.restore(session.guidedDemo) } : {}),
         }; controls.set(session.sessionId, state); activeConnections++;
         const beginTurn = async (turn: TurnRequest) => {
+          console.log(`[begin-turn] turnId=${turn.turnId} text=${JSON.stringify(turn.text.slice(0, 80))} demoDirector=${!!state.demoDirector} demoPhase=${state.demo?.phase ?? "none"} pendingJourney=${!!state.pendingJourney} dynamicEnabled=${!!state.session.installation.dynamicMode?.enabled}`);
           state.generation += 1;
           const generation = state.generation;
           state.busy?.abort();
@@ -1527,7 +1671,12 @@ export async function buildServer(config: RuntimeConfig, stores: RuntimeStores, 
             clearTimeout(state.pendingObservation.timer);
             state.pendingObservation = undefined;
           }
-          await resolveTurn(state, turn, undefined, undefined, generation);
+          try {
+            await resolveTurn(state, turn, undefined, undefined, generation);
+            console.log(`[begin-turn] turnId=${turn.turnId} resolveTurn returned normally`);
+          } catch (error) {
+            console.log(`[begin-turn] turnId=${turn.turnId} resolveTurn THREW: ${error instanceof Error ? error.stack ?? error.message : String(error)}`);
+          }
         };
         const processText = async (text: string) => {
           let voiceRequest: TurnRequest | undefined;
@@ -1638,15 +1787,16 @@ export async function buildServer(config: RuntimeConfig, stores: RuntimeStores, 
               if (state.demo?.phase === "closing") scheduleDemoClosing(state);
               if (state.pendingRestore && state.observation) resumeRestoredJourney(state, state.observation);
               if (state.pendingCatalogNavigationRestore && state.observation) await finishRestoredCatalogNavigation(state, state.observation);
-              if (state.demo?.phase === "awaiting_resume" && ["interruption", "module_complete", "failure"].includes(state.demo.resumeReason ?? "") && state.pendingDemoInterruption && !state.pendingDemoInterruption.plan) {
+              if (state.demo?.phase === "awaiting_resume" && ["interruption", "module_complete"].includes(state.demo.resumeReason ?? "") && state.pendingDemoInterruption && !state.pendingDemoInterruption.plan) {
                 await planPausedDemoInterruption(state);
               } else if (state.pendingDemoInterruption?.plan && ["answering", "awaiting_resume"].includes(state.demo?.phase ?? "")) {
                 await continuePersistedDemoInterruption(state);
               }
             }
             else if (message.kind === "sable.sdk.client.user_turn") {
+              console.log(`[user-turn] RECV turnId=${message.turnId} modality=${message.modality} text=${JSON.stringify(message.text.slice(0, 200))} uiMapElements=${message.uiMap?.elements.length ?? 0}`);
               voiceRequest = { turnId: message.turnId, text: message.text, modality: message.modality };
-              if (state.playbackBarrier && !state.playbackBarrier.turnId) state.playbackBarrier.turnId = message.turnId;
+              if (message.uiMap) state.lastUIMap = message.uiMap;
               const key = `user:${message.turnId}`;
               if (!state.transcript.some((entry) => entry.key === key)) state.transcript.push({ key, role: "user", text: message.text, createdAt: message.sentAt });
               if (state.demoDirector && state.demo && !["idle", "completed", "stopped"].includes(state.demo.phase)) {
@@ -1654,7 +1804,6 @@ export async function buildServer(config: RuntimeConfig, stores: RuntimeStores, 
                   if (isLikelyIntakeInterruption(message.text)) {
                     await answerIntakeInterruption(state, voiceRequest);
                   } else {
-                    releasePlaybackBarrier(state, voiceRequest.turnId);
                     const transition = state.demoDirector.captureIntake(state.demo, message.text);
                     await persistDemoState(state, transition.state);
                     if (transition.instruction.kind === "run" || transition.instruction.kind === "resume") await runDemoModule(state, transition.instruction);
@@ -1671,12 +1820,11 @@ export async function buildServer(config: RuntimeConfig, stores: RuntimeStores, 
                   await persistContinuity(state);
                   await planPausedDemoInterruption(state);
                 } else if (state.demo.phase === "awaiting_resume" && state.demo.resumeReason === "module_complete" && isModuleContinuationRequest(message.text)) {
-                  releasePlaybackBarrier(state, voiceRequest.turnId);
                   const transition = state.demoDirector.control(state.demo, "continue");
                   await persistDemoState(state, transition.state);
                   if (transition.instruction.kind === "run" || transition.instruction.kind === "resume") await runDemoModule(state, transition.instruction);
                   else if (transition.state.phase === "closing") scheduleDemoClosing(state);
-                } else if ((state.demo.phase === "awaiting_resume" && ["interruption", "module_complete", "failure"].includes(state.demo.resumeReason ?? "")) || state.demo.phase === "answering") {
+                } else if ((state.demo.phase === "awaiting_resume" && ["interruption", "module_complete"].includes(state.demo.resumeReason ?? "")) || state.demo.phase === "answering") {
                   state.pendingDemoInterruption = { request: voiceRequest };
                   await planPausedDemoInterruption(state);
                 } else {
@@ -1745,25 +1893,6 @@ export async function buildServer(config: RuntimeConfig, stores: RuntimeStores, 
               const pending = state.pendingCatalogNavigation;
               state.pendingCatalogNavigation = undefined;
               state.authoritativePendingCatalogNavigation = undefined;
-              const demoPending = state.pendingDemoInterruption;
-              if (demoPending?.plan?.responseMode === "navigate"
-                && demoPending.request.turnId === pending.request.turnId
-                && state.demoDirector && state.demo?.phase === "answering") {
-                const transitionOptions = {
-                  moduleCompletedDuringInterruption: state.demo.moduleCompletedDuringInterruption === true || state.demo.resumeReason === "module_complete",
-                  activeModuleId: state.demo.activeModuleId,
-                  nextModuleId: state.demo.playlistModuleIds[state.demo.moduleIndex + 1],
-                };
-                const resultText = message.ok
-                  ? "Done — I verified that navigation."
-                  : `I couldn't navigate safely. ${message.detail ?? "The trained transition was not verified."}`;
-                const answer = `${resultText} ${demoPlaybackTransitionText(demoPending.plan, state.catalog, transitionOptions)}`.replace(/\s+/g, " ").trim();
-                emitFinal(state, pending.request, answer);
-                const lastSequence = await speakLines(state, pending.request, [answer], "result");
-                await applyDemoPlaybackDirective(state, pending.request, demoPending.plan, lastSequence, state.demoPlanningGeneration);
-                await persistContinuity(state);
-                return;
-              }
               const answer = message.ok ? "Done — I verified that navigation." : `I couldn't navigate safely. ${message.detail ?? "The trained transition was not verified."}`;
               emitFinal(state, pending.request, answer);
               await persistContinuity(state);
@@ -1828,6 +1957,17 @@ export async function buildServer(config: RuntimeConfig, stores: RuntimeStores, 
               voice?.speech.interrupt();
               const stoppedPending = await stopPendingJourney(state, `SDK interruption: ${message.reason}`);
               if (!stoppedPending) send(socket, { ...commandBase(session.sessionId), kind: "sable.sdk.server.stop_journey", reason: message.reason });
+            }
+            else if (message.kind === "sable.sdk.client.dynamic_tool_result") {
+              console.log(`[dynamic-tool] RECV commandId=${message.result.commandId} success=${message.result.success} strategy=${message.result.matchedElement?.strategy ?? "n/a"} confidence=${message.result.matchedElement?.confidence ?? "n/a"} error=${message.result.error?.code ?? "none"} durationMs=${message.result.durationMs}`);
+              const pending = state.pendingDynamicTools?.get(message.result.commandId);
+              if (pending) {
+                clearTimeout(pending.timer);
+                state.pendingDynamicTools!.delete(message.result.commandId);
+                pending.resolve(message.result);
+              } else {
+                console.log(`[dynamic-tool] RECV commandId=${message.result.commandId} had no pending awaiter — the promise timed out already or was orphaned.`);
+              }
             }
             else if (message.kind === "sable.sdk.client.journey_progress" || message.kind === "sable.sdk.client.audio_playback") {
               if (message.kind === "sable.sdk.client.journey_progress" && state.pendingJourney && message.commandId === state.pendingJourney.commandId) {
@@ -1939,45 +2079,16 @@ export async function buildServer(config: RuntimeConfig, stores: RuntimeStores, 
             state.turns.noteSpoken(audio.text);
             state.turns.noteAudioSent(audio.purpose === "acknowledgement");
             state.outstandingSequences.add(audio.sequence);
-            send(socket, { type: "tts.chunk", generation: state.playbackGeneration, ...audio });
+            send(socket, { type: "tts.chunk", ...audio });
           },
           { betweenSentencesMs: config.voice.betweenSentencesMs, afterQuestionMs: config.voice.afterQuestionMs },
           narrationCache,
         );
-        const activateInterruptionBarrier = () => {
-          if (!state.interruptionActive) {
-            state.interruptionActive = true;
-            state.playbackGeneration += 1;
-            const control = controls.get(session.sessionId);
-            if (control) {
-              control.playbackBarrier = { generation: state.playbackGeneration };
-              control.busy?.abort();
-              control.demoPlanning?.abort();
-              control.demoPlanningGeneration += 1;
-              if (control.pendingDemoObservation) {
-                clearTimeout(control.pendingDemoObservation.timer);
-                control.pendingDemoObservation = undefined;
-              }
-              if (control.pendingObservation) {
-                clearTimeout(control.pendingObservation.timer);
-                control.pendingObservation = undefined;
-              }
-              if (control.demoClosingTimer) {
-                clearTimeout(control.demoClosingTimer);
-                control.demoClosingTimer = undefined;
-              }
-            }
-          }
-          send(socket, { type: "tts.cancel", reason: "barge_in", generation: state.playbackGeneration });
-          sync.reset();
-          state.outstandingSequences.clear();
-          speech.interrupt();
-        };
         const turns = new TurnManager({
-          stopAudio: activateInterruptionBarrier,
+          stopAudio: () => { send(socket, { type: "tts.cancel", reason: "barge_in" }); sync.reset(); state.outstandingSequences.clear(); },
           cancelSpeech: () => speech.interrupt(),
         }, { echoWindowMs: 12_000, yieldCooldownMs: 6_000 });
-        state = { socket, session, speech, sync, turns, outstandingSequences: new Set(), playbackGeneration: 0, interruptionActive: false };
+        state = { socket, session, speech, sync, turns, outstandingSequences: new Set() };
         voices.set(session.sessionId, state);
         let bytes = 0;
         activeConnections++;
@@ -1988,7 +2099,6 @@ export async function buildServer(config: RuntimeConfig, stores: RuntimeStores, 
             if (message.type === "voice.start") {
               bytes = 0;
               if (state.stt) return;
-              state.interruptionActive = false;
               let openedSession: SpeechToTextSession | undefined;
               const releaseSession = () => {
                 if (state.stt !== openedSession) return false;
@@ -2001,43 +2111,30 @@ export async function buildServer(config: RuntimeConfig, stores: RuntimeStores, 
                 sampleRate: 16_000,
                 vocabulary: session.installation.productId,
                 onSpeechStart: () => {
-                  // Local sidecar VAD is intentionally non-destructive. It is
-                  // useful early evidence, but loudspeaker echo can trigger it.
-                  // The browser may soft-pause while STT continues collecting.
-                  send(socket, { type: "speech.candidate", source: "sidecar_vad" });
+                  const interruption = turns.onUserVoice();
+                  if (interruption.interrupted) controls.get(session.sessionId)?.busy?.abort();
+                  send(socket, { type: "speech.start", interrupted: interruption.interrupted });
                 },
                 onPartial: (text) => send(socket, { type: "transcript.partial", text }),
                 onFinal: (text, timing) => {
                   if (!releaseSession()) return;
                   const accepted = turns.acceptTranscript(text);
-                  if (accepted.accept) {
-                    // A completed transcript that survived echo rejection is
-                    // the one authority allowed to destroy old playback and
-                    // pause the journey. Confirm first so the SDK can commit
-                    // its reversible local pause before cancellation arrives.
-                    const wasSpeaking = turns.isSpeaking;
-                    send(socket, { type: "speech.confirmed", interrupted: wasSpeaking });
-                    const interruption = turns.onUserVoice();
-                    if (!interruption.interrupted) activateInterruptionBarrier();
-                    send(socket, { type: "transcript.final", text, timing });
-                  } else send(socket, { type: "voice.no_speech", reason: accepted.reason });
+                  if (accepted.accept) send(socket, { type: "transcript.final", text, timing });
+                  else send(socket, { type: "voice.no_speech", reason: accepted.reason });
                 },
-                onNoSpeech: (reason) => {
-                  if (!releaseSession()) return;
-                  // A no-speech result rejects only the current reversible VAD
-                  // candidate. It must not release a barrier owned by an
-                  // earlier accepted turn on the separate control socket.
-                  send(socket, { type: "voice.no_speech", reason });
-                },
+                onNoSpeech: (reason) => { if (releaseSession()) send(socket, { type: "voice.no_speech", reason }); },
                 onError: (error) => { if (releaseSession()) send(socket, { type: "voice.error", message: error.message }); },
               });
               state.stt = openedSession;
               send(socket, { type: "voice.ready" });
             } else if (message.type === "voice.barge_in") {
-              // Browser VAD has survived the short post-pause echo probe, but
-              // remains acoustic evidence. Keep the player resumable until the
-              // final transcript is accepted above.
-              send(socket, { type: "speech.pending", source: "browser_vad" });
+              const interruption = turns.onUserVoice();
+              // The browser may acknowledge local cancellation on the control
+              // socket before this event reaches the voice socket. Cancel the
+              // producers unconditionally so late TTS chunks cannot restart.
+              state.speech.interrupt();
+              controls.get(session.sessionId)?.busy?.abort();
+              send(socket, { type: "speech.start", interrupted: interruption.interrupted, source: "browser_vad" });
             } else if (message.type === "voice.flush") state.stt?.finish();
             else if (message.type === "voice.cancel") { state.stt?.cancel(); state.stt = undefined; }
           } catch (error) { state.stt?.cancel(); state.stt = undefined; send(socket, { type: "voice.error", message: error instanceof Error ? error.message : "Voice failed" }); }
