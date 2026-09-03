@@ -20,6 +20,8 @@ import { SessionBootstrapClient } from "./bootstrap.js";
 import { SignedCatalogClient } from "./catalog.js";
 import { SableSdkError } from "./errors.js";
 import { DomScreenObserver } from "./observer.js";
+import { DynamicUIMapWatcher } from "./dom-map.js";
+import { executeDynamicTool } from "./dynamic-tools.js";
 import { PrivacyEngine } from "./privacy.js";
 import type { AgentLifecycleState, SableAgent, SableAgentConfig, SableAgentEvent, SableAgentSnapshot } from "./public-types.js";
 import { ScreenRecognizer } from "./recognizer.js";
@@ -108,6 +110,8 @@ class RuntimeAgent implements SableAgent {
   private state: AgentLifecycleState = "initializing";
   private listeners = new Set<(event: SableAgentEvent) => void>();
   private observer?: DomScreenObserver;
+  private privacy?: PrivacyEngine;
+  private dynamicUiMap?: DynamicUIMapWatcher;
   private recognizer?: ScreenRecognizer;
   private transport?: WebSocketCommandTransport;
   private telemetry?: TelemetryClient;
@@ -215,6 +219,10 @@ class RuntimeAgent implements SableAgent {
         if (restored.cleared) this.emit({ type: "continuity", state: "cleared", detail: restored.cleared });
       }
       const privacy = new PrivacyEngine(catalog.privacyPolicy, this.config.privacy);
+      this.privacy = privacy;
+      if (this.config.dynamicMode !== false) {
+        this.dynamicUiMap = new DynamicUIMapWatcher(privacy, { maxElements: 200, settleMs: 250 });
+      }
       this.tools = new ToolRegistry(catalog.tools);
       for (const tool of this.config.tools ?? []) this.tools.register(tool);
       this.policy = new DeterministicSafetyPolicy(this.config.safety);
@@ -257,6 +265,7 @@ class RuntimeAgent implements SableAgent {
       });
       await this.transport.connect(bootstrapAbort.signal);
       this.observer.start();
+      this.dynamicUiMap?.start();
       this.observer.subscribe((observation) => {
         const enriched = recognizer.enrich(observation);
         this.emit({ type: "observation", observation: enriched });
@@ -407,7 +416,14 @@ class RuntimeAgent implements SableAgent {
     this.requestDemoPause();
     const turnId = randomId("turn");
     this.continuity?.appendMessage({ key: `user:${turnId}`, role: "user", text: normalized });
-    this.transport?.send(this.message({ kind: "sable.sdk.client.user_turn", turnId, text: normalized, modality }));
+    const uiMap = this.dynamicUiMap?.snapshot();
+    this.transport?.send(this.message({
+      kind: "sable.sdk.client.user_turn",
+      turnId,
+      text: normalized,
+      modality,
+      ...(uiMap ? { uiMap } : {}),
+    }));
     // Preserve WebSocket order: the cloud must see the user's interruption
     // before it sees that the journey completed underneath the closing cue.
     this.flushPendingJourneyResult();
@@ -574,7 +590,7 @@ class RuntimeAgent implements SableAgent {
             return;
           }
         },
-        onStepCompleted: async (step, topLevelIndex) => {
+        onStepCompleted: async (step) => {
           if (isGuidedDemoActive(this.guidedDemo?.snapshot())) {
             await sleep(guidedDemoStepDelay(step), this.activeController?.signal);
           }
@@ -609,41 +625,7 @@ class RuntimeAgent implements SableAgent {
               turnId: this.activeTurnId,
               utteranceId,
             }));
-            const outcome = await played;
-            if (outcome === "failed") throw new Error(`Narration audio failed for step ${step.id}`);
-            if (outcome === "interrupted" && !this.activeController?.signal.aborted) {
-              // The browser action finished, but its explanation did not. Do
-              // not let "audio was cancelled" masquerade as "step narrated".
-              // Resume from the owning top-level block so the signed narration
-              // is offered again instead of completing or advancing silently.
-              const resumeStep = journey.workflow.steps[topLevelIndex] ?? step;
-              completedStepIds.delete(step.id);
-              completedStepIds.delete(resumeStep.id);
-              this.pauseRequested = false;
-              this.pausedJourney = {
-                journeyId,
-                catalogVersionId: this.current.session!.catalogVersionId,
-                inputs: structuredClone(inputs),
-                completedStepIds: [...completedStepIds],
-                nextStepId: resumeStep.id,
-                nextStepIndex: topLevelIndex,
-                ...(this.runningJourney?.stopAfterStepId ? { stopAfterStepId: this.runningJourney.stopAfterStepId } : {}),
-              };
-              if (this.guidedDemo?.snapshot().phase === "pausing") {
-                this.updateDemo(this.guidedDemo.checkpointJourney({
-                  journeyId,
-                  catalogVersionId: this.current.session!.catalogVersionId,
-                  completedStepIds: [...completedStepIds],
-                  nextStepId: resumeStep.id,
-                  nextStepIndex: topLevelIndex,
-                }));
-              }
-              if (this.activeCommandId && this.transport?.state === "connected") this.transport.send(this.message({
-                kind: "sable.sdk.client.journey_progress", commandId: this.activeCommandId,
-                journeyId, stepId: resumeStep.id, phase: "paused", detail: "Narration interrupted by accepted user speech",
-              }));
-              this.activeController?.abort("narration interrupted by voice");
-            }
+            await played;
           }
         },
         maxExecutedSteps: 200,
@@ -1026,6 +1008,61 @@ class RuntimeAgent implements SableAgent {
       this.emit({ type: "speak", turnId: command.turnId, text: command.text, voice: command.voice });
       return;
     }
+    if (command.kind === "sable.sdk.server.execute_dynamic_tool") {
+      if (!this.privacy) return;
+      // Fire-and-forget: dynamic tools cannot block a demo journey or continuity write.
+      void (async () => {
+        const shouldConfirm = command.requiresConfirmation && (command.risk === "destructive" || command.risk === "external_side_effect");
+        if (shouldConfirm && this.approvalHandler) {
+          const request: ApprovalRequest = {
+            requestId: command.commandId,
+            reason: command.reasoning ?? `Dynamic tool ${command.tool}`,
+            journeyId: `dynamic-${command.turnId}`,
+            journeyName: command.title ?? `Dynamic ${command.tool}`,
+            stepId: command.stepId,
+            risk: command.risk,
+            expiresAt: new Date(Date.now() + 60_000).toISOString(),
+          };
+          this.emit({ type: "approval", phase: "requested", request });
+          const approved = await this.approvalHandler(request);
+          this.emit({ type: "approval", phase: "resolved", request, approved });
+          if (!approved) {
+            this.transport?.send(this.message({
+              kind: "sable.sdk.client.dynamic_tool_result",
+              result: {
+                commandId: command.commandId,
+                turnId: command.turnId,
+                stepId: command.stepId,
+                success: false,
+                error: { code: "APPROVAL_DENIED", message: "The user did not approve the dynamic action" },
+                durationMs: 0,
+              },
+            }));
+            return;
+          }
+        }
+        const result = await executeDynamicTool(command, this.privacy!, {
+          signal: this.activeController?.signal,
+        });
+        // Fire the result over BOTH transports simultaneously — HTTP POST and
+        // WebSocket. Whichever the server receives first resolves the pending
+        // awaiter and the other becomes a no-op. Cloudflared quick tunnels
+        // buffer WS return frames aggressively (30–60 s of lag observed), so
+        // HTTP is the reliable path; WS remains for latency-sensitive local
+        // testing where it can actually be faster.
+        try {
+          this.transport?.send(this.message({
+            kind: "sable.sdk.client.dynamic_tool_result",
+            result,
+          }));
+        } catch {}
+        void this.postDynamicToolResult(result).catch(() => undefined);
+        // After executing a dynamic tool, invalidate the UIMap so the next
+        // turn sees the post-action DOM state.
+        this.dynamicUiMap?.snapshot();
+      })();
+      return;
+    }
     if (command.kind === "sable.sdk.server.error") {
       if (command.code === "CONTINUITY_REJECTED") {
         this.pausedJourney = undefined;
@@ -1096,9 +1133,7 @@ class RuntimeAgent implements SableAgent {
           ...(cue.moduleId ? { moduleId: cue.moduleId } : {}),
           ...(cue.questionId ? { questionId: cue.questionId } : {}),
         }));
-        const outcome = await played;
-        if (outcome === "failed") throw new Error(`Demo narration audio failed for ${cue.key}`);
-        if (outcome === "interrupted") return;
+        await played;
       } else {
         // A custom host can still provide its own speech bridge.
         this.emit({ type: "speak", turnId, text: cue.utterance.text });
@@ -1106,6 +1141,28 @@ class RuntimeAgent implements SableAgent {
     }
     if (cue.kind === "module_completion" && !controller.signal.aborted) await sleep(100, controller.signal);
     if (this.demoPlaybackController === controller) this.demoPlaybackController = undefined;
+  }
+
+  private async postDynamicToolResult(result: import("@sable/sdk-contracts").DynamicToolResult): Promise<void> {
+    const session = this.current.session;
+    if (!session) return;
+    const base = this.config.apiBaseUrl.endsWith("/") ? this.config.apiBaseUrl : `${this.config.apiBaseUrl}/`;
+    const url = new URL("api/v3/sdk/dynamic-tool-result", base).toString();
+    try {
+      await (this.config.fetcher ?? globalThis.fetch.bind(globalThis))(url, {
+        method: "POST",
+        headers: {
+          authorization: `Bearer ${session.sessionToken}`,
+          "content-type": "application/json",
+        },
+        body: JSON.stringify({ result }),
+        credentials: "omit",
+        cache: "no-store",
+        keepalive: true,
+      });
+    } catch {
+      // Fire-and-forget: if HTTP fails, the WS send may still deliver later.
+    }
   }
 
   private message<T extends ClientMessageBody>(value: T): SdkClientMessage {
@@ -1194,6 +1251,7 @@ class RuntimeAgent implements SableAgent {
     this.demoPlaybackController?.abort("shutdown");
     this.demoPlaybackController = undefined;
     this.observer?.stop();
+    this.dynamicUiMap?.stop();
     if (this.sessionExpiryTimer !== undefined) globalThis.clearTimeout(this.sessionExpiryTimer);
     this.sessionExpiryTimer = undefined;
     const session = this.current.session;
