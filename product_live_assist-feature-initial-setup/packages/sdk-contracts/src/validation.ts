@@ -1508,6 +1508,81 @@ function checkMessageBase(checker: Checker, object: RecordValue, path: string): 
   checker.isoDate(object.sentAt, `${path}.sentAt`);
 }
 
+const DYNAMIC_TOOL_KINDS = ["click", "fill", "select", "check", "uncheck", "hover", "scroll", "navigate", "wait", "read"] as const;
+const DYNAMIC_MATCH_STRATEGIES = ["testId", "ariaLabel", "roleName", "labelFuzzy", "text", "elementId"] as const;
+
+/** Size-capped so a malicious or misbehaving SDK cannot flood the runtime prompt. */
+function checkUIMapSnapshot(checker: Checker, value: unknown, path: string): void {
+  const snapshot = checker.object(value, path);
+  if (!snapshot) return;
+  checker.onlyKeys(snapshot, ["url", "path", "title", "elements", "capturedAt"], path);
+  checker.string(snapshot.url, `${path}.url`, { nonEmpty: true, maximum: 4_000 });
+  checker.string(snapshot.path, `${path}.path`, { nonEmpty: true, maximum: 2_000 });
+  if (snapshot.title !== undefined) checker.string(snapshot.title, `${path}.title`, { maximum: 2_000 });
+  checker.isoDate(snapshot.capturedAt, `${path}.capturedAt`);
+  const elements = checker.array(snapshot.elements, `${path}.elements`, 500);
+  elements?.forEach((raw, index) => {
+    const at = `${path}.elements[${index}]`;
+    const element = checker.object(raw, at);
+    if (!element) return;
+    checker.onlyKeys(element, ["id", "role", "label", "accessibleName", "testId", "text", "placeholder", "path", "sensitive", "editable", "visible"], at);
+    checker.string(element.id, `${at}.id`, { nonEmpty: true, maximum: 256 });
+    checker.string(element.role, `${at}.role`, { nonEmpty: true, maximum: 128 });
+    if (element.label !== undefined) checker.string(element.label, `${at}.label`, { maximum: 512 });
+    if (element.accessibleName !== undefined) checker.string(element.accessibleName, `${at}.accessibleName`, { maximum: 512 });
+    if (element.testId !== undefined) checker.string(element.testId, `${at}.testId`, { maximum: 256 });
+    if (element.text !== undefined) checker.string(element.text, `${at}.text`, { maximum: 2_000 });
+    if (element.placeholder !== undefined) checker.string(element.placeholder, `${at}.placeholder`, { maximum: 512 });
+    checker.string(element.path, `${at}.path`, { nonEmpty: true, maximum: 2_000 });
+    if (element.sensitive !== undefined) checker.boolean(element.sensitive, `${at}.sensitive`);
+    if (element.editable !== undefined) checker.boolean(element.editable, `${at}.editable`);
+    checker.boolean(element.visible, `${at}.visible`);
+  });
+}
+
+function checkDynamicToolTarget(checker: Checker, value: unknown, path: string): void {
+  const target = checker.object(value, path);
+  if (!target) return;
+  checker.onlyKeys(target, ["testId", "ariaLabel", "role", "accessibleName", "text", "elementId"], path);
+  ["testId", "ariaLabel", "role", "accessibleName", "text", "elementId"].forEach((key) => {
+    if (target[key] === undefined) return;
+    checker.string(target[key], `${path}.${key}`, { maximum: 2_000 });
+  });
+  const populated = ["testId", "ariaLabel", "role", "accessibleName", "text", "elementId"].some((key) => typeof target[key] === "string" && (target[key] as string).trim().length > 0);
+  if (!populated) checker.issue(path, "must supply at least one of testId, ariaLabel, role, accessibleName, text, elementId");
+}
+
+function checkDynamicToolResult(checker: Checker, value: unknown, path: string): void {
+  const result = checker.object(value, path);
+  if (!result) return;
+  checker.onlyKeys(result, ["commandId", "turnId", "stepId", "success", "data", "error", "matchedElement", "durationMs"], path);
+  checker.id(result.commandId, `${path}.commandId`);
+  checker.id(result.turnId, `${path}.turnId`);
+  checker.id(result.stepId, `${path}.stepId`);
+  checker.boolean(result.success, `${path}.success`);
+  if (result.data !== undefined) checkJson(checker, result.data, `${path}.data`);
+  if (result.error !== undefined) {
+    const error = checker.object(result.error, `${path}.error`);
+    if (error) {
+      checker.onlyKeys(error, ["code", "message"], `${path}.error`);
+      checker.id(error.code, `${path}.error.code`);
+      checker.string(error.message, `${path}.error.message`, { nonEmpty: true, maximum: 5_000 });
+    }
+  }
+  if (result.matchedElement !== undefined) {
+    const matched = checker.object(result.matchedElement, `${path}.matchedElement`);
+    if (matched) {
+      checker.onlyKeys(matched, ["role", "label", "testId", "strategy", "confidence"], `${path}.matchedElement`);
+      if (matched.role !== undefined) checker.string(matched.role, `${path}.matchedElement.role`, { maximum: 128 });
+      if (matched.label !== undefined) checker.string(matched.label, `${path}.matchedElement.label`, { maximum: 512 });
+      if (matched.testId !== undefined) checker.string(matched.testId, `${path}.matchedElement.testId`, { maximum: 256 });
+      checker.oneOf(matched.strategy, DYNAMIC_MATCH_STRATEGIES, `${path}.matchedElement.strategy`);
+      checker.number(matched.confidence, `${path}.matchedElement.confidence`, { minimum: 0, maximum: 1 });
+    }
+  }
+  checker.number(result.durationMs, `${path}.durationMs`, { integer: true, minimum: 0, maximum: 600_000 });
+}
+
 export function validateSdkClientMessage(value: unknown): ValidationResult<SdkClientMessage> {
   const checker = new Checker();
   const path = "$clientMessage";
@@ -1515,7 +1590,7 @@ export function validateSdkClientMessage(value: unknown): ValidationResult<SdkCl
   if (!object) return result(checker, value);
   checkMessageBase(checker, object, path);
   checker.id(object.messageId, `${path}.messageId`);
-  const kinds = ["sable.sdk.client.ready", "sable.sdk.client.demo_control", "sable.sdk.client.restore_context", "sable.sdk.client.user_turn", "sable.sdk.client.observation", "sable.sdk.client.journey_result", "sable.sdk.client.catalog_navigation_result", "sable.sdk.client.approval_result", "sable.sdk.client.journey_progress", "sable.sdk.client.journey_narration", "sable.sdk.client.demo_narration", "sable.sdk.client.audio_playback", "sable.sdk.client.interrupt", "sable.sdk.client.pong"] as const;
+  const kinds = ["sable.sdk.client.ready", "sable.sdk.client.demo_control", "sable.sdk.client.restore_context", "sable.sdk.client.user_turn", "sable.sdk.client.observation", "sable.sdk.client.journey_result", "sable.sdk.client.catalog_navigation_result", "sable.sdk.client.approval_result", "sable.sdk.client.journey_progress", "sable.sdk.client.journey_narration", "sable.sdk.client.demo_narration", "sable.sdk.client.audio_playback", "sable.sdk.client.interrupt", "sable.sdk.client.pong", "sable.sdk.client.dynamic_tool_result"] as const;
   checker.oneOf(object.kind, kinds, `${path}.kind`);
   const baseKeys = ["kind", "schemaVersion", "messageId", "sessionId", "sentAt"];
   if (object.kind === "sable.sdk.client.ready") {
@@ -1571,10 +1646,11 @@ export function validateSdkClientMessage(value: unknown): ValidationResult<SdkCl
       }
     }
   } else if (object.kind === "sable.sdk.client.user_turn") {
-    checker.onlyKeys(object, [...baseKeys, "turnId", "text", "modality"], path);
+    checker.onlyKeys(object, [...baseKeys, "turnId", "text", "modality", "uiMap"], path);
     checker.id(object.turnId, `${path}.turnId`);
     checker.string(object.text, `${path}.text`, { nonEmpty: true, maximum: 50_000 });
     checker.oneOf(object.modality, ["text", "voice"], `${path}.modality`);
+    if (object.uiMap !== undefined) checkUIMapSnapshot(checker, object.uiMap, `${path}.uiMap`);
   } else if (object.kind === "sable.sdk.client.observation") {
     checker.onlyKeys(object, [...baseKeys, "observation", "reason", "replyToCommandId", "turnId"], path);
     checkScreenObservation(checker, object.observation, `${path}.observation`);
@@ -1632,6 +1708,9 @@ export function validateSdkClientMessage(value: unknown): ValidationResult<SdkCl
   } else if (object.kind === "sable.sdk.client.pong") {
     checker.onlyKeys(object, [...baseKeys, "replyTo"], path);
     checker.id(object.replyTo, `${path}.replyTo`);
+  } else if (object.kind === "sable.sdk.client.dynamic_tool_result") {
+    checker.onlyKeys(object, [...baseKeys, "result"], path);
+    checkDynamicToolResult(checker, object.result, `${path}.result`);
   }
   return result(checker, value);
 }
@@ -1647,7 +1726,7 @@ export function validateSdkServerCommand(value: unknown): ValidationResult<SdkSe
   if (!object) return result(checker, value);
   checkMessageBase(checker, object, path);
   checker.id(object.commandId, `${path}.commandId`);
-  const kinds = ["sable.sdk.server.assistant_delta", "sable.sdk.server.assistant_final", "sable.sdk.server.run_journey", "sable.sdk.server.run_catalog_navigation", "sable.sdk.server.clear_catalog_navigation", "sable.sdk.server.restore_state", "sable.sdk.server.request_observation", "sable.sdk.server.pause_journey", "sable.sdk.server.stop_journey", "sable.sdk.server.request_approval", "sable.sdk.server.catalog_updated", "sable.sdk.server.session_policy", "sable.sdk.server.demo_state", "sable.sdk.server.speak", "sable.sdk.server.ping", "sable.sdk.server.error"] as const;
+  const kinds = ["sable.sdk.server.assistant_delta", "sable.sdk.server.assistant_final", "sable.sdk.server.run_journey", "sable.sdk.server.run_catalog_navigation", "sable.sdk.server.clear_catalog_navigation", "sable.sdk.server.restore_state", "sable.sdk.server.request_observation", "sable.sdk.server.pause_journey", "sable.sdk.server.stop_journey", "sable.sdk.server.request_approval", "sable.sdk.server.catalog_updated", "sable.sdk.server.session_policy", "sable.sdk.server.demo_state", "sable.sdk.server.speak", "sable.sdk.server.ping", "sable.sdk.server.error", "sable.sdk.server.execute_dynamic_tool"] as const;
   checker.oneOf(object.kind, kinds, `${path}.kind`);
   const baseKeys = ["kind", "schemaVersion", "commandId", "sessionId", "sentAt"];
   if (object.kind === "sable.sdk.server.assistant_delta" || object.kind === "sable.sdk.server.assistant_final") {
@@ -1736,6 +1815,26 @@ export function validateSdkServerCommand(value: unknown): ValidationResult<SdkSe
     checker.boolean(object.retryable, `${path}.retryable`);
   } else if (object.kind === "sable.sdk.server.ping") {
     checker.onlyKeys(object, baseKeys, path);
+  } else if (object.kind === "sable.sdk.server.execute_dynamic_tool") {
+    checker.onlyKeys(object, [...baseKeys, "turnId", "stepId", "tool", "target", "arguments", "risk", "requiresConfirmation", "reasoning", "title"], path);
+    checker.id(object.turnId, `${path}.turnId`);
+    checker.id(object.stepId, `${path}.stepId`);
+    checker.oneOf(object.tool, DYNAMIC_TOOL_KINDS, `${path}.tool`);
+    if (object.target !== undefined) checkDynamicToolTarget(checker, object.target, `${path}.target`);
+    const args = checker.object(object.arguments, `${path}.arguments`);
+    if (args) {
+      if (Object.keys(args).length > 32) checker.issue(`${path}.arguments`, "must contain at most 32 properties");
+      Object.entries(args).forEach(([key, value]) => checkJson(checker, value, `${path}.arguments.${key}`));
+    }
+    checker.oneOf(object.risk, RISKS, `${path}.risk`);
+    checker.boolean(object.requiresConfirmation, `${path}.requiresConfirmation`);
+    optionalString(checker, object, "reasoning", path, 2_000);
+    optionalString(checker, object, "title", path, 1_000);
+    // Tool-specific presence checks: click/fill/select/check/uncheck/hover need a target;
+    // navigate/wait/scroll/read do not (target on scroll/read is optional).
+    if (["click", "fill", "select", "check", "uncheck", "hover"].includes(String(object.tool)) && object.target === undefined) {
+      checker.issue(`${path}.target`, `tool ${String(object.tool)} requires a target`);
+    }
   }
   return result(checker, value);
 }
