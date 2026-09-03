@@ -9,7 +9,7 @@
     "score": 0,
     "tenantId": "niroggyan-tenant",
     "productId": "niroggyan-brochure-product",
-    "catalogVersionId": "niroggyan-brochure-v1"
+    "catalogVersionId": "niroggyan-brochure-v2-test"
   },
   {
     "id": "kb-smart-reporting",
@@ -21,7 +21,7 @@
     "score": 0,
     "tenantId": "niroggyan-tenant",
     "productId": "niroggyan-brochure-product",
-    "catalogVersionId": "niroggyan-brochure-v1"
+    "catalogVersionId": "niroggyan-brochure-v2-test"
   },
   {
     "id": "kb-engagement",
@@ -33,7 +33,7 @@
     "score": 0,
     "tenantId": "niroggyan-tenant",
     "productId": "niroggyan-brochure-product",
-    "catalogVersionId": "niroggyan-brochure-v1"
+    "catalogVersionId": "niroggyan-brochure-v2-test"
   },
   {
     "id": "kb-roi-calculator",
@@ -45,7 +45,7 @@
     "score": 0,
     "tenantId": "niroggyan-tenant",
     "productId": "niroggyan-brochure-product",
-    "catalogVersionId": "niroggyan-brochure-v1"
+    "catalogVersionId": "niroggyan-brochure-v2-test"
   },
   {
     "id": "kb-sample-roi",
@@ -57,7 +57,7 @@
     "score": 0,
     "tenantId": "niroggyan-tenant",
     "productId": "niroggyan-brochure-product",
-    "catalogVersionId": "niroggyan-brochure-v1"
+    "catalogVersionId": "niroggyan-brochure-v2-test"
   },
   {
     "id": "kb-statistics",
@@ -69,7 +69,7 @@
     "score": 0,
     "tenantId": "niroggyan-tenant",
     "productId": "niroggyan-brochure-product",
-    "catalogVersionId": "niroggyan-brochure-v1"
+    "catalogVersionId": "niroggyan-brochure-v2-test"
   },
   {
     "id": "kb-testimonials",
@@ -81,7 +81,7 @@
     "score": 0,
     "tenantId": "niroggyan-tenant",
     "productId": "niroggyan-brochure-product",
-    "catalogVersionId": "niroggyan-brochure-v1"
+    "catalogVersionId": "niroggyan-brochure-v2-test"
   },
   {
     "id": "kb-onboarding",
@@ -93,7 +93,7 @@
     "score": 0,
     "tenantId": "niroggyan-tenant",
     "productId": "niroggyan-brochure-product",
-    "catalogVersionId": "niroggyan-brochure-v1"
+    "catalogVersionId": "niroggyan-brochure-v2-test"
   },
   {
     "id": "kb-routes",
@@ -105,7 +105,7 @@
     "score": 0,
     "tenantId": "niroggyan-tenant",
     "productId": "niroggyan-brochure-product",
-    "catalogVersionId": "niroggyan-brochure-v1"
+    "catalogVersionId": "niroggyan-brochure-v2-test"
   },
   {
     "id": "kb-coverage-gap",
@@ -117,7 +117,7 @@
     "score": 0,
     "tenantId": "niroggyan-tenant",
     "productId": "niroggyan-brochure-product",
-    "catalogVersionId": "niroggyan-brochure-v1"
+    "catalogVersionId": "niroggyan-brochure-v2-test"
   },
   {
     "id": "kb-auth",
@@ -129,7 +129,7 @@
     "score": 0,
     "tenantId": "niroggyan-tenant",
     "productId": "niroggyan-brochure-product",
-    "catalogVersionId": "niroggyan-brochure-v1"
+    "catalogVersionId": "niroggyan-brochure-v2-test"
   },
   {
     "id": "kb-contact",
@@ -141,6 +141,6 @@
     "score": 0,
     "tenantId": "niroggyan-tenant",
     "productId": "niroggyan-brochure-product",
-    "catalogVersionId": "niroggyan-brochure-v1"
+    "catalogVersionId": "niroggyan-brochure-v2-test"
   }
 ]
